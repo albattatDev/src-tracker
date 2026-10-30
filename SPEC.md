@@ -1,19 +1,22 @@
 # SPEC — Service Request & Compliance Tracker (SRC-T)
 
 ## 1. Goal
+
 A full-stack web app where Operations submit Service Requests (SRs) to Maintenance, invoices linked to SRs are tracked for aging, and contractor safety documents are tracked for expiry. Daily background jobs send email alerts at defined thresholds, once per threshold.
 
 ## 2. Roles (RBAC)
-| Role | Can do |
-|---|---|
-| `operations` | Create SRs, view own SRs |
-| `engineer` | View SRs assigned to them, update status (In Progress, Resolved), add invoices to SRs assigned to them |
-| `manager` | Everything above + assign SRs, close SRs, approve/reject invoices, manage contractors & documents |
-| `admin` | Manage users and roles |
+
+| Role         | Can do                                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------ |
+| `operations` | Create SRs, view own SRs                                                                               |
+| `engineer`   | View SRs assigned to them, update status (In Progress, Resolved), add invoices to SRs assigned to them |
+| `manager`    | Everything above + assign SRs, close SRs, approve/reject invoices, manage contractors & documents      |
+| `admin`      | Manage users and roles                                                                                 |
 
 All API endpoints require a JWT except `/auth/login` and `/health`. Passwords hashed with bcrypt (or argon2).
 
 ## 3. Module A — Service Requests
+
 - Fields: requester (user), title, description, priority (`low|medium|high`), status, assigned_engineer (nullable), created_at, updated_at.
 - Status lifecycle: `open → assigned → in_progress → resolved → closed`.
   - Assigning an engineer moves `open → assigned`.
@@ -21,6 +24,7 @@ All API endpoints require a JWT except `/auth/login` and `/health`. Passwords ha
 - List endpoint supports filtering by engineer, status, priority, date range; sorting by created_at / priority; pagination.
 
 ## 4. Module B — Invoice Compliance & Aging
+
 - Invoice fields: service_request_id (FK), invoice_number (unique), amount (SAR), submission_date, due_date, approval_status (`pending|approved|rejected`), approved_by, approved_at.
 - Only `manager` can approve/reject.
 - **Aging rule (decision):** `age_days = today − due_date`. If due_date is null, use submission_date. Computed in Asia/Riyadh calendar days; dates stored as DATE, timestamps as UTC.
@@ -33,6 +37,7 @@ All API endpoints require a JWT except `/auth/login` and `/health`. Passwords ha
 - Aging is computed, not stored (one pure function used by API and job).
 
 ## 5. Module C — Contractor Safety Documents
+
 - Contractor fields: name, contact_email, internal_manager (user FK), is_active.
 - Document types (enum): `HIP`, `JSA`, `CCSP`, `CWQAP`, `JOB_X`.
 - Document fields: contractor_id, doc_type, file_path, original_filename, expiry_date, uploaded_by, uploaded_at.
@@ -41,6 +46,7 @@ All API endpoints require a JWT except `/auth/login` and `/health`. Passwords ha
 - Upload: PDF/JPG/PNG only, max 10 MB, stored on disk/volume (not in DB).
 
 ## 6. Notification Engine
+
 - Runs daily via Celery Beat (separate worker, never in the request thread).
 - Invoice job: for each invoice whose approval_status is not `approved`, if age crosses 30, 60 or 180 → email the assigned engineer and their manager. Once an invoice is approved, no further alerts are sent for it.
 - Document job: if a document expires within 30 days → email the contractor contact and the internal manager.
@@ -49,20 +55,33 @@ All API endpoints require a JWT except `/auth/login` and `/health`. Passwords ha
 - Dev email goes to Mailpit (local SMTP + web UI).
 
 ## 7. Audit Log
+
 - Table `audit_log`: user_id, action, entity_type, entity_id, old_values (JSON), new_values (JSON), created_at.
 - Written for create/update/delete on SRs, invoices, contractors, documents, and role changes.
 
 ## 8. Database (MySQL 8)
+
 Tables: `users`, `service_requests`, `invoices`, `contractors`, `contractor_documents`, `notification_log`, `audit_log`.
-Indexes: `service_requests(assigned_engineer_id)`, `service_requests(status)`, `service_requests(created_at)`, `invoices(service_request_id)`, `invoices(due_date)`, `contractor_documents(contractor_id)`, `contractor_documents(expiry_date)`, unique on `notification_log(entity_type, entity_id, threshold)`.
+Full column and index design: see `docs/erd.md` (source of truth).
+
+Indexes:
+
+- `service_requests(assigned_engineer_id)`, `service_requests(requester_id)`, `service_requests(status)`, `service_requests(created_at)`
+- `invoices(service_request_id)`, `invoices(approval_status, due_date)`
+- `contractor_documents(contractor_id, doc_type)`, `contractor_documents(expiry_date)`
+- UNIQUE `notification_log(entity_type, entity_id, threshold)`
+- `audit_log(entity_type, entity_id)`, `audit_log(created_at)`
+  .
 
 ## 9. Frontend
+
 - Pages: Login, Dashboard, Service Requests (list + detail + create), Invoices, Contractors (list + detail with documents), Audit Log (manager/admin), Users (admin).
 - Dashboard: counts by SR status, invoices per aging band (colored), documents expiring in 30 days, expired documents.
 - Responsive down to mobile width.
 - Bonus: WebSocket push so the dashboard updates when a new SR is created.
 
 ## 10. Deliverables
+
 1. Git repository
 2. ER diagram (`docs/erd.png`) + SQL dump (`docs/schema.sql`)
 3. Swagger/OpenAPI at `/docs`
@@ -71,6 +90,7 @@ Indexes: `service_requests(assigned_engineer_id)`, `service_requests(status)`, `
 6. Bonus: unit tests (aging + notification triggers), Dockerfile + docker-compose.yml, WebSockets, audit log
 
 ## 11. Assumptions (document these in the README)
+
 - Roles: `admin` added for user management (not in the report), so managers cannot grant themselves or others permissions.
 - Engineers add invoices to their assigned SRs; managers approve or reject them (the person who adds an invoice is never the one who approves it).
 - Managers assign SRs to engineers and close SRs.
