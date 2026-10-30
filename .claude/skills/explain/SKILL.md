@@ -30,8 +30,15 @@ Rules:
 - Prefer short real snippets from the file over long pastes.
 - Do not change any code while explaining.
 
+## How to say it (interview prep)
+
+The interview will be in English. After the Arabic explanation, add a short section titled **How to say it** with 2–3 plain English sentences the user could say if an interviewer asked about this code or decision. Use simple, natural spoken English, not documentation style.
+
 ## Check understanding
 
-End with exactly one question that tests understanding (not memory), for example "what would happen if…" or "where would you change X if…".
+End with exactly one question in English that tests understanding (not memory), for example "What would happen if…?" or "Where would you change X if…?". Ask the user to answer in English.
 
-Wait for the answer. Then say what was right, correct what was wrong in a sentence or two, and stop. Do not ask a second question unless the user asks for more.
+Wait for the answer. Then:
+- Say what was right and correct what was wrong (in Arabic, a sentence or two).
+- Give a cleaner English version of the user's answer, keeping their ideas.
+Stop there. Do not ask a second question unless the user asks for more.
