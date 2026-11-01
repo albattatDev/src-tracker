@@ -1,6 +1,7 @@
 import enum
 
-from sqlalchemy import Boolean, ForeignKey, String, true
+from sqlalchemy import Boolean, ColumnElement, ForeignKey, String, func, true
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, db_enum, table_args
@@ -34,3 +35,13 @@ class User(TimestampMixin, Base):
         "User", remote_side="User.id", back_populates="reports"
     )
     reports: Mapped[list["User"]] = relationship("User", back_populates="manager")
+
+    @hybrid_property
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
+
+    @full_name.inplace.expression
+    @classmethod
+    def _full_name_expression(cls) -> ColumnElement[str]:
+        # Also works on aliased(User), which is how a query joins users twice.
+        return func.concat(cls.first_name, " ", cls.last_name)
