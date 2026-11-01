@@ -15,11 +15,11 @@ Project: Service Request & Compliance Tracker (SRC-T). Full requirements in `SPE
 ## Layout
 ```
 backend/app/
-  core/        config.py, security.py, deps.py (auth + role guards)
+  core/        config.py, database.py, security.py, deps.py (auth + role guards)
   models/      one file per table
   schemas/     Pydantic schemas
   routers/     auth, users, service_requests, invoices, contractors, documents, dashboard, audit
-  services/    aging.py, compliance.py, notifications.py, audit.py
+  services/    auth.py, aging.py, compliance.py, notifications.py, audit.py
   tasks/       celery_app.py, invoice_jobs.py, document_jobs.py
 backend/tests/
 frontend/src/  pages/, components/, api/, hooks/

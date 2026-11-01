@@ -11,7 +11,7 @@ A full-stack web app where Operations submit Service Requests (SRs) to Maintenan
 | `operations` | Create SRs, view own SRs                                                                               |
 | `engineer`   | View SRs assigned to them, update status (In Progress, Resolved), add invoices to SRs assigned to them |
 | `manager`    | Everything above + assign SRs, close SRs, approve/reject invoices, manage contractors & documents      |
-| `admin`      | Manage users and roles                                                                                 |
+| `admin`      | Manage users and roles + view all service requests (read-only)                                         |
 
 All API endpoints require a JWT except `/auth/login` and `/health`. Passwords hashed with bcrypt (or argon2).
 
@@ -92,6 +92,7 @@ Indexes:
 ## 11. Assumptions (document these in the README)
 
 - Roles: `admin` added for user management (not in the report), so managers cannot grant themselves or others permissions.
+- Admin can view all service requests (read-only). Admin cannot create or change them.
 - Engineers add invoices to their assigned SRs; managers approve or reject them (the person who adds an invoice is never the one who approves it).
 - Managers assign SRs to engineers and close SRs.
 - Added `updated_at` on SRs (report only lists creation date/time).
