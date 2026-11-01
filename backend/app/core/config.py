@@ -1,4 +1,8 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+JWT_SECRET_MIN_LENGTH = 32
+JWT_SECRET_PLACEHOLDER_PREFIX = "change-me"
 
 
 class Settings(BaseSettings):
@@ -19,6 +23,24 @@ class Settings(BaseSettings):
     app_timezone: str = "Asia/Riyadh"
     frontend_url: str = "http://localhost:5173"
     seed_password: str
+
+    jwt_secret: str
+    jwt_expire_minutes: int = 480
+
+    @field_validator("jwt_secret")
+    @classmethod
+    def jwt_secret_must_be_strong(cls, value: str) -> str:
+        if len(value) < JWT_SECRET_MIN_LENGTH:
+            raise ValueError(
+                f"JWT_SECRET must be at least {JWT_SECRET_MIN_LENGTH} characters "
+                "(generate one with: openssl rand -hex 32)"
+            )
+        if value.startswith(JWT_SECRET_PLACEHOLDER_PREFIX):
+            raise ValueError(
+                "JWT_SECRET is still the .env.example placeholder "
+                "(generate one with: openssl rand -hex 32)"
+            )
+        return value
 
     @property
     def database_url(self) -> str:
