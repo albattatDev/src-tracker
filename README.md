@@ -3,18 +3,24 @@
 Service Request & Compliance Tracker (SRC-T). Full spec in [SPEC.md](SPEC.md), database design
 in [docs/erd.md](docs/erd.md), contributor instructions in [CLAUDE.md](CLAUDE.md).
 
-This branch (`feature/project-setup`) is slice 1: project setup only — docker-compose, the
-database schema, a health check, and one frontend page proving the stack is wired together. No
-auth, no business features, no background jobs yet.
+Built one slice at a time. So far: project setup (Docker, schema, seed, `/health`) and auth
+(JWT login, role guards, the logged-in app shell with a role-based sidebar). The pages behind the
+sidebar are "Coming soon" placeholders; business features, background jobs and email come in later
+slices.
 
 ## Setup
 
 ```bash
 cp .env.example .env
-# edit .env: set real values for DB_PASSWORD, DB_ROOT_PASSWORD, SEED_PASSWORD
+# edit .env: set real values for DB_PASSWORD, DB_ROOT_PASSWORD, SEED_PASSWORD, JWT_SECRET
+# generate JWT_SECRET with:  openssl rand -hex 32
 
 docker compose up --build
 ```
+
+After pulling changes that add frontend dependencies, use `docker compose up --build -V`. The
+frontend's `node_modules` is an anonymous volume, so without `-V` the container keeps the old
+packages.
 
 Once `db` is healthy and `api` is up:
 
@@ -51,3 +57,13 @@ Password for all demo users is `SEED_PASSWORD` from `.env`.
 | Noura Alshehri | operations@srct.local | operations |
 
 Running the seed again does not create duplicates.
+
+## Known limits
+
+- No rate limiting on `/auth/login`.
+- Log out only clears the token in the browser. The token stays valid until it expires (8 hours),
+  although deactivating a user blocks it immediately.
+- The access token is kept in the browser's `localStorage`, so any cross-site scripting (XSS) bug
+  could read it. Nothing in the app renders untrusted HTML today; keep it that way.
+- The frontend role guards only decide what to show. The real enforcement is `require_role` on each
+  API endpoint.

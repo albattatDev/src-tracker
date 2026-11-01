@@ -29,7 +29,9 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from app.core.config import settings  # noqa: E402
 from app.core.database import get_db  # noqa: E402
+from app.core.security import hash_password  # noqa: E402
 from app.main import app  # noqa: E402
+from app.models import User, UserRole  # noqa: E402
 
 # Fails the whole run if `app` was already imported (and configured) before this file.
 assert_test_db(settings.database_url)
@@ -84,3 +86,26 @@ def client(db_session: Session):
         yield TestClient(app)
     finally:
         app.dependency_overrides.pop(get_db, None)
+
+
+@pytest.fixture
+def make_user(db_session: Session):
+    def _make_user(
+        email: str = "user@srct.local",
+        password: str = "correct-password",
+        role: UserRole = UserRole.ENGINEER,
+        is_active: bool = True,
+    ) -> User:
+        user = User(
+            first_name="Test",
+            last_name="User",
+            email=email,
+            password_hash=hash_password(password),
+            role=role,
+            is_active=is_active,
+        )
+        db_session.add(user)
+        db_session.flush()
+        return user
+
+    return _make_user
