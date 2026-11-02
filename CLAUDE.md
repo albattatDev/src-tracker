@@ -19,7 +19,7 @@ backend/app/
   models/      one file per table
   schemas/     Pydantic schemas
   routers/     auth, users, service_requests, invoices, contractors, documents, dashboard, audit
-  services/    auth.py, aging.py, compliance.py, notifications.py, audit.py
+  services/    auth.py, service_requests.py, dates.py (Riyadh day helpers, incl. the future "today in Asia/Riyadh"), aging.py, compliance.py, notifications.py, audit.py
   tasks/       celery_app.py, invoice_jobs.py, document_jobs.py
 backend/tests/
 frontend/src/  pages/, components/, api/, hooks/
