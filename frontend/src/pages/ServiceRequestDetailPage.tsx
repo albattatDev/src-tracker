@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { PriorityBadge, StatusBadge } from "../components/Badges";
 import ServiceRequestActions from "../components/ServiceRequestActions";
+import ServiceRequestInvoices from "../components/ServiceRequestInvoices";
 import { useServiceRequest } from "../hooks/useServiceRequests";
 import { formatRiyadh } from "../utils/dates";
 
@@ -79,6 +80,7 @@ export default function ServiceRequestDetailPage() {
       </dl>
 
       <ServiceRequestActions sr={sr} />
+      <ServiceRequestInvoices sr={sr} />
     </div>
   );
 }

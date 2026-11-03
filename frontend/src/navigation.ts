@@ -18,7 +18,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Service Requests",
     roles: ["operations", "engineer", "manager", "admin"],
   },
-  { path: "/invoices", label: "Invoices", roles: ["engineer", "manager"] },
+  { path: "/invoices", label: "Invoices", roles: ["engineer", "manager", "admin"] },
   { path: "/contractors", label: "Contractors", roles: ["manager"] },
   { path: "/audit-log", label: "Audit Log", roles: ["manager", "admin"] },
   { path: "/users", label: "Users", roles: ["admin"] },

@@ -29,3 +29,18 @@ def test_earliest_date_raises_overflow():
     # 00:00 Riyadh on 0001-01-01 is before year 1 in UTC.
     with pytest.raises(OverflowError):
         riyadh_day_start_utc(date.min)
+
+
+def test_riyadh_today_is_the_riyadh_date_not_the_utc_date(monkeypatch):
+    from datetime import timezone
+
+    from app.services import dates
+
+    class FrozenDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            # 22:30 UTC on 1 Nov is already 2 Nov (01:30) in Riyadh.
+            return datetime(2026, 11, 1, 22, 30, tzinfo=timezone.utc).astimezone(tz)
+
+    monkeypatch.setattr(dates, "datetime", FrozenDatetime)
+    assert dates.riyadh_today() == date(2026, 11, 2)

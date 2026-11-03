@@ -1,4 +1,6 @@
 import enum
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 from pydantic_core import to_jsonable_python
@@ -16,12 +18,14 @@ class AuditAction(str, enum.Enum):
     DELETE = "delete"
     APPROVE = "approve"
     ASSIGN = "assign"
+    REJECT = "reject"
 
 
 class AuditEntity(str, enum.Enum):
     """audit_log.entity_type values. Add a member when a new table starts being audited."""
 
     SERVICE_REQUEST = "service_request"
+    INVOICE = "invoice"
 
 
 # Bookkeeping columns that change on every write and say nothing about what was edited.
@@ -39,6 +43,21 @@ def row_values(row: Base) -> dict[str, Any]:
         for column in inspect(row).mapper.column_attrs
         if column.key not in _NOISE_COLUMNS
     }
+
+
+@contextmanager
+def audited_write(db: Session) -> Iterator[None]:
+    """Wraps a change and its log_action call. The one commit at the end saves both
+    together, and any error undoes both."""
+    try:
+        yield
+        db.commit()
+    except Exception:
+        # Roll back on purpose. In production get_db closes the session and would undo it
+        # anyway, but this keeps the guarantee ("nothing saved if anything fails") true on
+        # its own, and the audit-failure test relies on it because its session is shared.
+        db.rollback()
+        raise
 
 
 def log_action(

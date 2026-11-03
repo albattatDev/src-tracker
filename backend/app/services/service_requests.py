@@ -1,5 +1,3 @@
-from collections.abc import Iterator
-from contextlib import contextmanager
 from datetime import timedelta
 from typing import Any
 
@@ -18,7 +16,7 @@ from app.schemas.service_request import (
     SRSortField,
     SRStatusUpdate,
 )
-from app.services.audit import AuditAction, AuditEntity, log_action, row_values
+from app.services.audit import AuditAction, AuditEntity, audited_write, log_action, row_values
 from app.services.dates import riyadh_day_start_utc
 from app.services.sr_status import (
     InvalidStatusChange,
@@ -139,22 +137,7 @@ def _read_required(db: Session, *conditions: ColumnElement[bool]) -> SRRead:
     return SRRead.model_validate(row)
 
 
-@contextmanager
-def _audited_write(db: Session) -> Iterator[None]:
-    """Wraps a change and its log_action call. The one commit at the end saves both
-    together, and any error undoes both."""
-    try:
-        yield
-        db.commit()
-    except Exception:
-        # Roll back on purpose. In production get_db closes the session and would undo it
-        # anyway, but this keeps the guarantee ("nothing saved if anything fails") true on
-        # its own, and the audit-failure test relies on it because its session is shared.
-        db.rollback()
-        raise
-
-
-def _lock_visible_request(db: Session, user: User, request_id: int) -> ServiceRequest:
+def lock_visible_request(db: Session, user: User, request_id: int) -> ServiceRequest:
     """The request as a row this user may see, locked until the commit so two people
     changing the same request cannot both pass their checks on the same old status.
     Missing and hidden requests raise the same error as in get_request."""
@@ -196,7 +179,7 @@ def get_request(db: Session, user: User, request_id: int) -> SRRead:
 
 def create_request(db: Session, user: User, data: SRCreate) -> SRRead:
     """Creates an open request for `user` and its audit row in one transaction."""
-    with _audited_write(db):
+    with audited_write(db):
         request = ServiceRequest(
             title=data.title,
             description=data.description,
@@ -226,8 +209,8 @@ def create_request(db: Session, user: User, data: SRCreate) -> SRRead:
 def assign_request(db: Session, user: User, request_id: int, data: SRAssign) -> SRRead:
     """Gives an open or assigned request to an engineer. From open the status becomes
     assigned; from assigned only the engineer changes."""
-    with _audited_write(db):
-        request = _lock_visible_request(db, user, request_id)
+    with audited_write(db):
+        request = lock_visible_request(db, user, request_id)
         old_values = row_values(request)
 
         if not can_assign(request.status):
@@ -249,8 +232,8 @@ def assign_request(db: Session, user: User, request_id: int, data: SRAssign) -> 
 
 def change_status(db: Session, user: User, request_id: int, data: SRStatusUpdate) -> SRRead:
     """Moves a request one step along the lifecycle (never to assigned, see sr_status)."""
-    with _audited_write(db):
-        request = _lock_visible_request(db, user, request_id)
+    with audited_write(db):
+        request = lock_visible_request(db, user, request_id)
         old_values = row_values(request)
 
         check_role_can_set(user.role, data.status)

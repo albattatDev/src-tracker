@@ -87,6 +87,14 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   return response.json();
 }
 
+export function sendJson<T>(method: string, path: string, body?: unknown): Promise<T> {
+  return apiFetch<T>(path, {
+    method,
+    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
 // Deliberately does not use apiFetch: a 401 here means "wrong password" and must show
 // an error on the form, not log anyone out. OAuth2PasswordRequestForm expects
 // form-encoded fields, with the email in `username`.

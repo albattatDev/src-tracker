@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, sendJson } from "./client";
 
 // These mirror the backend enums and schemas (SRRead, SRPage, SRListParams).
 export const PRIORITIES = ["low", "medium", "high"] as const;
@@ -58,14 +58,6 @@ export interface SRCreate {
   title: string;
   description: string;
   priority: Priority;
-}
-
-function sendJson<T>(method: string, path: string, body: unknown): Promise<T> {
-  return apiFetch<T>(path, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
 }
 
 export function getServiceRequest(id: number): Promise<SRRead> {
