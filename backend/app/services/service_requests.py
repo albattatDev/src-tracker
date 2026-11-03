@@ -1,16 +1,18 @@
 from datetime import timedelta
 
-from sqlalchemy import ColumnElement, asc, desc, func, select
+from sqlalchemy import ColumnElement, Select, asc, desc, func, select
 from sqlalchemy.orm import Session, aliased
 
-from app.models import ServiceRequest, User, UserRole
+from app.models import ServiceRequest, SRStatus, User, UserRole
 from app.schemas.service_request import (
     SortOrder,
+    SRCreate,
     SRListParams,
     SRPage,
     SRRead,
     SRSortField,
 )
+from app.services.audit import AuditAction, AuditEntity, log_action, row_values
 from app.services.dates import riyadh_day_start_utc
 
 # The only columns a client can sort by. The client picks a key, never a column name.
@@ -23,6 +25,10 @@ SORT_COLUMNS = {
 
 class InvalidDateRange(Exception):
     """created_from / created_to cannot be used. The message is safe to show the client."""
+
+
+class ServiceRequestNotFound(Exception):
+    """The request does not exist, or this user is not allowed to see it."""
 
 
 def _visibility_conditions(user: User) -> list[ColumnElement[bool]]:
@@ -86,6 +92,82 @@ def _filter_conditions(user: User, params: SRListParams) -> list[ColumnElement[b
     return conditions
 
 
+def _read_query() -> Select:
+    """The SELECT behind every SRRead (list, detail, create): a service request with the
+    requester's and engineer's names joined in from users."""
+    requester = aliased(User)
+    engineer = aliased(User)
+    return (
+        select(
+            ServiceRequest.id,
+            ServiceRequest.title,
+            ServiceRequest.description,
+            ServiceRequest.priority,
+            ServiceRequest.status,
+            requester.full_name.label("requester_name"),
+            # NULL when the outer join finds no engineer (CONCAT is NULL if any part is).
+            engineer.full_name.label("assigned_engineer_name"),
+            ServiceRequest.created_at,
+            ServiceRequest.updated_at,
+        )
+        .join(requester, ServiceRequest.requester_id == requester.id)
+        .outerjoin(engineer, ServiceRequest.assigned_engineer_id == engineer.id)
+    )
+
+
+def _read_one(db: Session, *conditions: ColumnElement[bool]) -> SRRead | None:
+    row = db.execute(_read_query().where(*conditions)).one_or_none()
+    return None if row is None else SRRead.model_validate(row)
+
+
+def get_request(db: Session, user: User, request_id: int) -> SRRead:
+    """One request, if this user may see it. A missing request and one outside the user's
+    visibility raise the same error, so the API never reveals which ids exist."""
+    found = _read_one(db, ServiceRequest.id == request_id, *_visibility_conditions(user))
+    if found is None:
+        raise ServiceRequestNotFound(request_id)
+    return found
+
+
+def create_request(db: Session, user: User, data: SRCreate) -> SRRead:
+    """Creates an open request for `user` and its audit row in one transaction."""
+    try:
+        request = ServiceRequest(
+            title=data.title,
+            description=data.description,
+            priority=data.priority,
+            status=SRStatus.OPEN,
+            requester_id=user.id,
+        )
+        db.add(request)
+        # flush sends the INSERT so MySQL gives us request.id, but nothing is saved for
+        # good until the commit below.
+        db.flush()
+
+        log_action(
+            db,
+            user.id,
+            AuditAction.CREATE,
+            AuditEntity.SERVICE_REQUEST,
+            request.id,
+            new_values=row_values(request),
+        )
+        # The one commit: the request and its audit row are saved together.
+        db.commit()
+    except Exception:
+        # Roll back on purpose. In production get_db closes the session and would undo it
+        # anyway, but this keeps the guarantee ("nothing saved if anything fails") true on
+        # its own, and the audit-failure test relies on it because its session is shared.
+        db.rollback()
+        raise
+
+    # The caller just created this row, so it is read back without the visibility rule:
+    # creating must not depend on being allowed to see.
+    created = _read_one(db, ServiceRequest.id == request.id)
+    assert created is not None
+    return created
+
+
 def list_requests(db: Session, user: User, params: SRListParams) -> SRPage:
     """Returns one page of the service requests this user may see, with names joined
     from users. `total` counts every matching row, not just this page.
@@ -107,25 +189,10 @@ def _fetch_page(
     params: SRListParams,
     offset: int,
 ) -> list[SRRead]:
-    requester = aliased(User)
-    engineer = aliased(User)
     direction = asc if params.order == SortOrder.ASC else desc
 
     query = (
-        select(
-            ServiceRequest.id,
-            ServiceRequest.title,
-            ServiceRequest.description,
-            ServiceRequest.priority,
-            ServiceRequest.status,
-            requester.full_name.label("requester_name"),
-            # NULL when the outer join finds no engineer (CONCAT is NULL if any part is).
-            engineer.full_name.label("assigned_engineer_name"),
-            ServiceRequest.created_at,
-            ServiceRequest.updated_at,
-        )
-        .join(requester, ServiceRequest.requester_id == requester.id)
-        .outerjoin(engineer, ServiceRequest.assigned_engineer_id == engineer.id)
+        _read_query()
         .where(*conditions)
         # id breaks ties, so rows with equal values cannot swap places between pages.
         .order_by(direction(SORT_COLUMNS[params.sort]), direction(ServiceRequest.id))

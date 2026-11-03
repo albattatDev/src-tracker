@@ -1,7 +1,8 @@
 import enum
 from datetime import date, datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.models import Priority, SRStatus
 
@@ -27,6 +28,19 @@ class SRListParams(BaseModel):
     order: SortOrder = SortOrder.DESC
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=100)
+
+
+# Surrounding whitespace is removed before the length checks, so "   " counts as empty.
+TrimmedStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+
+
+class SRCreate(BaseModel):
+    # Unknown fields (requester_id, status, ...) are rejected with 422, not ignored.
+    model_config = ConfigDict(extra="forbid")
+
+    title: TrimmedStr = Field(max_length=200)
+    description: TrimmedStr
+    priority: Priority
 
 
 class SRRead(BaseModel):
