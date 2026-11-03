@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+/* Tailwind v4's preflight sets buttons to cursor: default. Restore the pointer for
+   everything clickable in one place instead of adding cursor-pointer to each button.
+   This is in the base layer, so a utility class (cursor-pointer on a table row,
+   disabled:cursor-not-allowed) still wins where it is set. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for],
+  select {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}

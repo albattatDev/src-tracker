@@ -2,13 +2,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { Decision, InvoiceOut } from "../api/invoices";
 import { useDecideInvoice } from "../hooks/useInvoices";
+import { useRowNavigation } from "../hooks/useRowNavigation";
 import { formatAmount } from "../utils/money";
 import { formatDate } from "../utils/dates";
 import { AgingBadge, ApprovalStatusBadge } from "./Badges";
+import { buttonClass } from "./buttonStyles";
 import ConfirmDialog from "./ConfirmDialog";
-
-const ACTION_BUTTON =
-  "rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium hover:bg-gray-100";
 
 const DECISION_TEXT: Record<Decision, { verb: string; running: string }> = {
   approve: { verb: "Approve", running: "Approving…" },
@@ -28,6 +27,7 @@ export default function InvoiceTable({
 }) {
   const [pending, setPending] = useState<{ invoice: InvoiceOut; decision: Decision } | null>(null);
   const decide = useDecideInvoice();
+  const { rowProps } = useRowNavigation();
 
   function open(invoice: InvoiceOut, decision: Decision) {
     decide.reset(); // an old error must not show up in the next dialog
@@ -63,7 +63,12 @@ export default function InvoiceTable({
         </thead>
         <tbody className="divide-y divide-gray-100">
           {items.map((invoice) => (
-            <tr key={invoice.id}>
+            // The row goes where its "Service request" link goes. Without that column (the SR
+            // detail page) there is nowhere to go, so the row stays inert.
+            <tr
+              key={invoice.id}
+              {...rowProps(showRequest ? `/service-requests/${invoice.service_request_id}` : undefined)}
+            >
               <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-900">
                 {invoice.invoice_number}
               </td>
@@ -94,13 +99,13 @@ export default function InvoiceTable({
                   {invoice.approval_status === "pending" && (
                     <div className="flex gap-2">
                       <button
-                        className={`${ACTION_BUTTON} text-green-800`}
+                        className={buttonClass("outline-success", "sm")}
                         onClick={() => open(invoice, "approve")}
                       >
                         Approve
                       </button>
                       <button
-                        className={`${ACTION_BUTTON} text-red-800`}
+                        className={buttonClass("outline-danger", "sm")}
                         onClick={() => open(invoice, "reject")}
                       >
                         Reject
