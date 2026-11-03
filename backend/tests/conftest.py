@@ -32,6 +32,8 @@ from app.core.database import get_db  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import User, UserRole  # noqa: E402
+from app.seed import seed_users  # noqa: E402
+from tests.helpers import get_user  # noqa: E402
 
 # Fails the whole run if `app` was already imported (and configured) before this file.
 assert_test_db(settings.database_url)
@@ -86,6 +88,16 @@ def client(db_session: Session):
         yield TestClient(app)
     finally:
         app.dependency_overrides.pop(get_db, None)
+
+
+@pytest.fixture
+def users(db_session: Session) -> dict[str, User]:
+    """The seeded demo users by short name: operations, manager, engineer1, engineer2, admin."""
+    seed_users(db_session)
+    return {
+        name: get_user(db_session, f"{name}@srct.local")
+        for name in ("operations", "manager", "engineer1", "engineer2", "admin")
+    }
 
 
 @pytest.fixture

@@ -1,19 +1,31 @@
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import timedelta
+from typing import Any
 
 from sqlalchemy import ColumnElement, Select, asc, desc, func, select
 from sqlalchemy.orm import Session, aliased
 
+from app.core.errors import BadRequest
 from app.models import ServiceRequest, SRStatus, User, UserRole
 from app.schemas.service_request import (
     SortOrder,
+    SRAssign,
     SRCreate,
     SRListParams,
     SRPage,
     SRRead,
     SRSortField,
+    SRStatusUpdate,
 )
 from app.services.audit import AuditAction, AuditEntity, log_action, row_values
 from app.services.dates import riyadh_day_start_utc
+from app.services.sr_status import (
+    InvalidStatusChange,
+    can_assign,
+    check_role_can_set,
+    check_status_change,
+)
 
 # The only columns a client can sort by. The client picks a key, never a column name.
 # Sorting by priority relies on the MySQL ENUM order (low, medium, high); don't reorder it.
@@ -23,12 +35,16 @@ SORT_COLUMNS = {
 }
 
 
-class InvalidDateRange(Exception):
+class InvalidDateRange(BadRequest):
     """created_from / created_to cannot be used. The message is safe to show the client."""
 
 
 class ServiceRequestNotFound(Exception):
     """The request does not exist, or this user is not allowed to see it."""
+
+
+class InvalidEngineer(BadRequest):
+    """The chosen user cannot be assigned. The message is safe to show the client."""
 
 
 def _visibility_conditions(user: User) -> list[ColumnElement[bool]]:
@@ -115,23 +131,72 @@ def _read_query() -> Select:
     )
 
 
-def _read_one(db: Session, *conditions: ColumnElement[bool]) -> SRRead | None:
+def _read_required(db: Session, *conditions: ColumnElement[bool]) -> SRRead:
+    """The one request matching `conditions`, or ServiceRequestNotFound."""
     row = db.execute(_read_query().where(*conditions)).one_or_none()
-    return None if row is None else SRRead.model_validate(row)
+    if row is None:
+        raise ServiceRequestNotFound()
+    return SRRead.model_validate(row)
+
+
+@contextmanager
+def _audited_write(db: Session) -> Iterator[None]:
+    """Wraps a change and its log_action call. The one commit at the end saves both
+    together, and any error undoes both."""
+    try:
+        yield
+        db.commit()
+    except Exception:
+        # Roll back on purpose. In production get_db closes the session and would undo it
+        # anyway, but this keeps the guarantee ("nothing saved if anything fails") true on
+        # its own, and the audit-failure test relies on it because its session is shared.
+        db.rollback()
+        raise
+
+
+def _lock_visible_request(db: Session, user: User, request_id: int) -> ServiceRequest:
+    """The request as a row this user may see, locked until the commit so two people
+    changing the same request cannot both pass their checks on the same old status.
+    Missing and hidden requests raise the same error as in get_request."""
+    request = db.scalars(
+        select(ServiceRequest)
+        .where(ServiceRequest.id == request_id, *_visibility_conditions(user))
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).one_or_none()
+    if request is None:
+        raise ServiceRequestNotFound(request_id)
+    return request
+
+
+def _log_change(
+    db: Session,
+    user: User,
+    action: AuditAction,
+    request: ServiceRequest,
+    old_values: dict[str, Any],
+) -> None:
+    """Audits a change to `request`; call it after the change, with old_values taken before."""
+    log_action(
+        db,
+        user.id,
+        action,
+        AuditEntity.SERVICE_REQUEST,
+        request.id,
+        old_values=old_values,
+        new_values=row_values(request),
+    )
 
 
 def get_request(db: Session, user: User, request_id: int) -> SRRead:
     """One request, if this user may see it. A missing request and one outside the user's
     visibility raise the same error, so the API never reveals which ids exist."""
-    found = _read_one(db, ServiceRequest.id == request_id, *_visibility_conditions(user))
-    if found is None:
-        raise ServiceRequestNotFound(request_id)
-    return found
+    return _read_required(db, ServiceRequest.id == request_id, *_visibility_conditions(user))
 
 
 def create_request(db: Session, user: User, data: SRCreate) -> SRRead:
     """Creates an open request for `user` and its audit row in one transaction."""
-    try:
+    with _audited_write(db):
         request = ServiceRequest(
             title=data.title,
             description=data.description,
@@ -141,7 +206,7 @@ def create_request(db: Session, user: User, data: SRCreate) -> SRRead:
         )
         db.add(request)
         # flush sends the INSERT so MySQL gives us request.id, but nothing is saved for
-        # good until the commit below.
+        # good until the commit at the end of the with block.
         db.flush()
 
         log_action(
@@ -152,20 +217,49 @@ def create_request(db: Session, user: User, data: SRCreate) -> SRRead:
             request.id,
             new_values=row_values(request),
         )
-        # The one commit: the request and its audit row are saved together.
-        db.commit()
-    except Exception:
-        # Roll back on purpose. In production get_db closes the session and would undo it
-        # anyway, but this keeps the guarantee ("nothing saved if anything fails") true on
-        # its own, and the audit-failure test relies on it because its session is shared.
-        db.rollback()
-        raise
 
     # The caller just created this row, so it is read back without the visibility rule:
     # creating must not depend on being allowed to see.
-    created = _read_one(db, ServiceRequest.id == request.id)
-    assert created is not None
-    return created
+    return _read_required(db, ServiceRequest.id == request.id)
+
+
+def assign_request(db: Session, user: User, request_id: int, data: SRAssign) -> SRRead:
+    """Gives an open or assigned request to an engineer. From open the status becomes
+    assigned; from assigned only the engineer changes."""
+    with _audited_write(db):
+        request = _lock_visible_request(db, user, request_id)
+        old_values = row_values(request)
+
+        if not can_assign(request.status):
+            raise InvalidStatusChange("Only open or assigned requests can be assigned")
+
+        # This engineer row is not locked: one deactivated between this check and the
+        # commit can still be assigned. The window is tiny, so it is accepted.
+        engineer = db.get(User, data.assigned_engineer_id)
+        # One message for missing, wrong role and inactive, so ids and roles are not leaked.
+        if engineer is None or engineer.role != UserRole.ENGINEER or not engineer.is_active:
+            raise InvalidEngineer("assigned_engineer_id must be an active engineer")
+
+        request.assigned_engineer_id = engineer.id
+        request.status = SRStatus.ASSIGNED
+        _log_change(db, user, AuditAction.ASSIGN, request, old_values)
+
+    return _read_required(db, ServiceRequest.id == request_id)
+
+
+def change_status(db: Session, user: User, request_id: int, data: SRStatusUpdate) -> SRRead:
+    """Moves a request one step along the lifecycle (never to assigned, see sr_status)."""
+    with _audited_write(db):
+        request = _lock_visible_request(db, user, request_id)
+        old_values = row_values(request)
+
+        check_role_can_set(user.role, data.status)
+        check_status_change(request.status, data.status)
+
+        request.status = data.status
+        _log_change(db, user, AuditAction.UPDATE, request, old_values)
+
+    return _read_required(db, ServiceRequest.id == request_id)
 
 
 def list_requests(db: Session, user: User, params: SRListParams) -> SRPage:
