@@ -53,3 +53,35 @@ export function listServiceRequests(params: SRListParams): Promise<SRPage> {
   const qs = query.toString();
   return apiFetch<SRPage>(`/service-requests${qs ? `?${qs}` : ""}`);
 }
+
+export interface SRCreate {
+  title: string;
+  description: string;
+  priority: Priority;
+}
+
+function sendJson<T>(method: string, path: string, body: unknown): Promise<T> {
+  return apiFetch<T>(path, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export function getServiceRequest(id: number): Promise<SRRead> {
+  return apiFetch<SRRead>(`/service-requests/${id}`);
+}
+
+export function createServiceRequest(data: SRCreate): Promise<SRRead> {
+  return sendJson<SRRead>("POST", "/service-requests", data);
+}
+
+export function assignServiceRequest(id: number, engineerId: number): Promise<SRRead> {
+  return sendJson<SRRead>("PATCH", `/service-requests/${id}/assign`, {
+    assigned_engineer_id: engineerId,
+  });
+}
+
+export function changeServiceRequestStatus(id: number, status: SRStatus): Promise<SRRead> {
+  return sendJson<SRRead>("PATCH", `/service-requests/${id}/status`, { status });
+}
