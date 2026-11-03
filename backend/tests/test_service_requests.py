@@ -6,22 +6,18 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.core.security import create_access_token
 from app.models import Priority, ServiceRequest, SRStatus, User
 from app.schemas.service_request import SRListParams
 from app.seed import seed_users
 from app.services.service_requests import list_requests
-
-
-def get_user(db_session: Session, email: str) -> User:
-    return db_session.query(User).filter(User.email == email).one()
+from tests.helpers import auth_headers, get_user
 
 
 def get_as(client: TestClient, user: User, **params) -> httpx.Response:
     return client.get(
         "/service-requests",
         params=params,
-        headers={"Authorization": f"Bearer {create_access_token(user)}"},
+        headers=auth_headers(user),
     )
 
 
