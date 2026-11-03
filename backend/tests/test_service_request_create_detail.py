@@ -1,11 +1,9 @@
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
 from app.models import AuditLog, Priority, ServiceRequest, SRStatus, User, UserRole
-from app.seed import seed_users
-from tests.helpers import auth_headers, get_user
+from tests.helpers import auth_headers
 
 VALID_BODY = {"title": "Broken AC", "description": "Room 4 is hot", "priority": "high"}
 
@@ -16,15 +14,6 @@ def post_as(client: TestClient, user: User, body: dict) -> httpx.Response:
 
 def get_one_as(client: TestClient, user: User, request_id: int) -> httpx.Response:
     return client.get(f"/service-requests/{request_id}", headers=auth_headers(user))
-
-
-@pytest.fixture
-def users(db_session: Session) -> dict[str, User]:
-    seed_users(db_session)
-    return {
-        name: get_user(db_session, f"{name}@srct.local")
-        for name in ("operations", "manager", "engineer1", "engineer2", "admin")
-    }
 
 
 # --- POST /service-requests ---

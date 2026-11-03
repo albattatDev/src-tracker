@@ -43,6 +43,18 @@ class SRCreate(BaseModel):
     priority: Priority
 
 
+class SRAssign(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    assigned_engineer_id: int
+
+
+class SRStatusUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: SRStatus
+
+
 class SRRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

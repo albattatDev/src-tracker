@@ -4,8 +4,10 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.deps import get_optional_user
-from app.routers import auth, health, service_requests
-from app.services.service_requests import InvalidDateRange, ServiceRequestNotFound
+from app.core.errors import BadRequest
+from app.routers import auth, health, service_requests, users
+from app.services.service_requests import ServiceRequestNotFound
+from app.services.sr_status import StatusChangeNotAllowed
 
 # Default-deny: every route needs a valid JWT unless it is listed in PUBLIC_PATHS, so a
 # new router cannot be left unprotected by accident.
@@ -25,6 +27,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(service_requests.router)
+app.include_router(users.router)
 
 
 # One place that turns service errors into clean 4xx answers. The 404 text is the same for
@@ -36,6 +39,13 @@ def service_request_not_found(request: Request, error: ServiceRequestNotFound) -
     )
 
 
-@app.exception_handler(InvalidDateRange)
-def invalid_date_range(request: Request, error: InvalidDateRange) -> JSONResponse:
+# InvalidDateRange, InvalidStatusChange and InvalidEngineer all subclass BadRequest, so this
+# one handler answers them all.
+@app.exception_handler(BadRequest)
+def bad_request(request: Request, error: BadRequest) -> JSONResponse:
     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"detail": str(error)})
+
+
+@app.exception_handler(StatusChangeNotAllowed)
+def status_change_not_allowed(request: Request, error: StatusChangeNotAllowed) -> JSONResponse:
+    return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"detail": str(error)})
