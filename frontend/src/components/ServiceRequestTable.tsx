@@ -1,3 +1,4 @@
+import { Link, useNavigate } from "react-router-dom";
 import type { SortOrder, SRRead, SRSortField } from "../api/serviceRequests";
 import { formatRiyadh } from "../utils/dates";
 import { PriorityBadge, StatusBadge } from "./Badges";
@@ -48,6 +49,7 @@ export default function ServiceRequestTable({
   onSort: (field: SRSortField) => void;
   dimmed: boolean; // true while the next page loads, so the old rows look "stale"
 }) {
+  const navigate = useNavigate();
   return (
     <div
       className={`overflow-x-auto rounded-lg border border-gray-200 bg-white ${
@@ -68,9 +70,22 @@ export default function ServiceRequestTable({
         </thead>
         <tbody className="divide-y divide-gray-100">
           {items.map((sr) => (
-            <tr key={sr.id}>
+            <tr
+              key={sr.id}
+              onClick={() => navigate(`/service-requests/${sr.id}`)}
+              className="cursor-pointer hover:bg-gray-50"
+            >
               <td className="px-3 py-2 text-gray-500">#{sr.id}</td>
-              <td className="px-3 py-2 font-medium text-gray-900">{sr.title}</td>
+              <td className="px-3 py-2 font-medium text-gray-900">
+                {/* The real link keeps keyboard and middle-click working; the row click is a convenience. */}
+                <Link
+                  to={`/service-requests/${sr.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="hover:underline"
+                >
+                  {sr.title}
+                </Link>
+              </td>
               <td className="px-3 py-2">
                 <PriorityBadge priority={sr.priority} />
               </td>

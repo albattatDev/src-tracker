@@ -4,6 +4,8 @@ import AppLayout from "./components/AppLayout";
 import { RequireAuth, RequireRole } from "./components/RouteGuards";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import LoginPage from "./pages/LoginPage";
+import ServiceRequestCreatePage from "./pages/ServiceRequestCreatePage";
+import ServiceRequestDetailPage from "./pages/ServiceRequestDetailPage";
 import ServiceRequestsPage from "./pages/ServiceRequestsPage";
 import { NAV_ITEMS } from "./navigation";
 
@@ -26,6 +28,12 @@ export default function App() {
               />
             </Route>
           ))}
+          <Route element={<RequireRole roles={["operations", "manager"]} />}>
+            <Route path="/service-requests/new" element={<ServiceRequestCreatePage />} />
+          </Route>
+          <Route element={<RequireRole roles={["operations", "engineer", "manager", "admin"]} />}>
+            <Route path="/service-requests/:id" element={<ServiceRequestDetailPage />} />
+          </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Route>

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import Pagination from "../components/Pagination";
 import ServiceRequestFilters from "../components/ServiceRequestFilters";
 import ServiceRequestTable from "../components/ServiceRequestTable";
@@ -24,7 +25,17 @@ export default function ServiceRequestsPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold text-gray-900">Service Requests</h1>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-gray-900">Service Requests</h1>
+        {(user?.role === "operations" || user?.role === "manager") && (
+          <Link
+            to="/service-requests/new"
+            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+          >
+            New Request
+          </Link>
+        )}
+      </div>
 
       <ServiceRequestFilters
         params={params}

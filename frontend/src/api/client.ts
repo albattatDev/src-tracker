@@ -16,11 +16,19 @@ export interface User {
 
 export class ApiError extends Error {
   status: number;
+  // Only set for 422: field name -> first validation message for that field.
+  fieldErrors: Record<string, string>;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, fieldErrors: Record<string, string> = {}) {
     super(message);
     this.status = status;
+    this.fieldErrors = fieldErrors;
   }
+}
+
+interface ValidationIssue {
+  loc: (string | number)[];
+  msg: string;
 }
 
 export function getToken(): string | null {
@@ -45,13 +53,23 @@ export function setUnauthorizedHandler(handler: () => void): void {
 
 async function errorFromResponse(response: Response): Promise<ApiError> {
   let message = `Request failed with status ${response.status}`;
+  const fieldErrors: Record<string, string> = {};
   try {
     const body = await response.json();
-    if (typeof body.detail === "string") message = body.detail;
+    if (typeof body.detail === "string") {
+      message = body.detail;
+    } else if (Array.isArray(body.detail)) {
+      // FastAPI 422: [{ loc: ["body", "title"], msg: "..." }, ...]
+      message = "Please fix the highlighted fields.";
+      for (const issue of body.detail as ValidationIssue[]) {
+        const field = String(issue.loc[issue.loc.length - 1]);
+        fieldErrors[field] ??= issue.msg;
+      }
+    }
   } catch {
     // Body was not JSON; keep the generic message.
   }
-  return new ApiError(response.status, message);
+  return new ApiError(response.status, message, fieldErrors);
 }
 
 // Authenticated request. Any 401 clears the token and triggers the logout handler.
