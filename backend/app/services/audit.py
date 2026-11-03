@@ -26,6 +26,8 @@ class AuditEntity(str, enum.Enum):
 
     SERVICE_REQUEST = "service_request"
     INVOICE = "invoice"
+    CONTRACTOR = "contractor"
+    CONTRACTOR_DOCUMENT = "contractor_document"
 
 
 # Bookkeeping columns that change on every write and say nothing about what was edited.

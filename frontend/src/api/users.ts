@@ -11,3 +11,8 @@ export interface UserBrief {
 export function listEngineers(): Promise<UserBrief[]> {
   return apiFetch<UserBrief[]>("/users?role=engineer");
 }
+
+// The people a contractor can be assigned to as internal manager (active managers only).
+export function listManagers(): Promise<UserBrief[]> {
+  return apiFetch<UserBrief[]>("/users?role=manager");
+}

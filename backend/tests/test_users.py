@@ -59,7 +59,7 @@ def test_operations_and_engineer_get_403(client, users, name):
     assert list_engineers_as(client, users[name]).status_code == 403
 
 
-@pytest.mark.parametrize("role", ["manager", "admin", "operations", "nonsense"])
+@pytest.mark.parametrize("role", ["admin", "operations", "nonsense"])
 def test_other_roles_are_not_listable(client, users, role):
     response = client.get("/users", params={"role": role}, headers=auth_headers(users["admin"]))
 
@@ -72,3 +72,23 @@ def test_role_is_required(client, users):
 
 def test_users_requires_a_token(client):
     assert client.get("/users", params={"role": "engineer"}).status_code == 401
+
+
+@pytest.mark.parametrize("name", ["manager", "admin"])
+def test_manager_and_admin_can_list_managers(client, make_user, users, name):
+    make_user(email="gone@srct.local", role=UserRole.MANAGER, is_active=False)
+
+    response = client.get(
+        "/users", params={"role": "manager"}, headers=auth_headers(users[name])
+    )
+
+    assert response.status_code == 200
+    assert [item["email"] for item in response.json()] == ["manager@srct.local"]
+    assert set(response.json()[0]) == {"id", "full_name", "email"}
+
+
+@pytest.mark.parametrize("name", ["operations", "engineer1"])
+def test_operations_and_engineer_cannot_list_managers(client, users, name):
+    response = client.get("/users", params={"role": "manager"}, headers=auth_headers(users[name]))
+
+    assert response.status_code == 403

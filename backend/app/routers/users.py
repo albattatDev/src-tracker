@@ -18,9 +18,9 @@ router = APIRouter(prefix="/users", tags=["users"])
     dependencies=[Depends(require_role(UserRole.MANAGER, UserRole.ADMIN))],
 )
 def list_users(
-    # Only engineers can be listed for now (that is what the assign picker needs).
-    # Any other value is rejected with 422 instead of exposing other roles.
-    role: Literal[UserRole.ENGINEER],
+    # Only the roles a picker needs: engineers (assign an SR) and managers (a contractor's
+    # internal manager). Any other value is rejected with 422 instead of exposing other roles.
+    role: Literal[UserRole.ENGINEER, UserRole.MANAGER],
     db: Session = Depends(get_db),
 ) -> list[User]:
     return list_active_users(db, role)

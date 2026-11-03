@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     jwt_secret: str
     jwt_expire_minutes: int = 480
 
+    # Contractor documents live on disk (a Docker volume), never in the database.
+    upload_dir: str = "/data/uploads"
+
     @field_validator("jwt_secret")
     @classmethod
     def jwt_secret_must_be_strong(cls, value: str) -> str:
