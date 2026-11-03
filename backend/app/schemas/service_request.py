@@ -1,10 +1,11 @@
 import enum
-from datetime import date, datetime
+from datetime import date
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.models import Priority, SRStatus
+from app.schemas.types import UtcDatetime
 
 
 class SRSortField(str, enum.Enum):
@@ -65,8 +66,8 @@ class SRRead(BaseModel):
     status: SRStatus
     requester_name: str
     assigned_engineer_name: str | None
-    created_at: datetime
-    updated_at: datetime
+    created_at: UtcDatetime
+    updated_at: UtcDatetime
 
 
 class SRPage(BaseModel):
