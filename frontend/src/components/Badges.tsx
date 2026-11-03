@@ -1,3 +1,4 @@
+import type { AgingBand, ApprovalStatus, InvoiceOut } from "../api/invoices";
 import type { Priority, SRStatus } from "../api/serviceRequests";
 
 const BASE = "inline-block rounded-full px-2.5 py-0.5 text-xs font-medium";
@@ -30,4 +31,46 @@ export function PriorityBadge({ priority }: { priority: Priority }) {
 export function StatusBadge({ status }: { status: SRStatus }) {
   const { label, className } = STATUS_DISPLAY[status];
   return <span className={`${BASE} ${className}`}>{label}</span>;
+}
+
+export const APPROVAL_DISPLAY: Record<ApprovalStatus, Display> = {
+  pending: { label: "Pending", className: "bg-blue-100 text-blue-800" },
+  approved: { label: "Approved", className: "bg-green-100 text-green-800" },
+  rejected: { label: "Rejected", className: "bg-red-100 text-red-800" },
+};
+
+export function ApprovalStatusBadge({ status }: { status: ApprovalStatus }) {
+  const { label, className } = APPROVAL_DISPLAY[status];
+  return <span className={`${BASE} ${className}`}>{label}</span>;
+}
+
+// Colour and word both carry the band, so it does not depend on colour alone.
+export const AGING_DISPLAY: Record<AgingBand, Display> = {
+  green: { label: "Normal", className: "bg-green-100 text-green-800" },
+  yellow: { label: "Warning", className: "bg-yellow-100 text-yellow-800" },
+  orange: { label: "Overdue", className: "bg-orange-100 text-orange-800" },
+  red: { label: "Critical", className: "bg-red-100 text-red-800" },
+};
+
+function ageText(ageDays: number): string {
+  if (ageDays < 0) return `Due in ${-ageDays} ${-ageDays === 1 ? "day" : "days"}`;
+  return `${ageDays} ${ageDays === 1 ? "day" : "days"}`;
+}
+
+// Only pending invoices age. Decided ones (approved or rejected) show a dash: no band
+// colour and no day count, even though the API sends both. The Status column says which.
+export function AgingBadge({
+  invoice,
+}: {
+  invoice: Pick<InvoiceOut, "approval_status" | "age_days" | "aging_band">;
+}) {
+  if (invoice.approval_status !== "pending") {
+    return <span className="text-gray-400">—</span>;
+  }
+  const { label, className } = AGING_DISPLAY[invoice.aging_band];
+  return (
+    <span className={`${BASE} ${className}`}>
+      {ageText(invoice.age_days)} · {label}
+    </span>
+  );
 }

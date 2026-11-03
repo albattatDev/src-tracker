@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
 import { RequireAuth, RequireRole } from "./components/RouteGuards";
 import ComingSoonPage from "./pages/ComingSoonPage";
+import InvoicesPage from "./pages/InvoicesPage";
 import LoginPage from "./pages/LoginPage";
 import ServiceRequestCreatePage from "./pages/ServiceRequestCreatePage";
 import ServiceRequestDetailPage from "./pages/ServiceRequestDetailPage";
@@ -12,6 +13,7 @@ import { NAV_ITEMS } from "./navigation";
 // Pages that are built. Any nav item not listed here still shows "Coming soon".
 const PAGES: Record<string, ReactElement> = {
   "/service-requests": <ServiceRequestsPage />,
+  "/invoices": <InvoicesPage />,
 };
 
 export default function App() {

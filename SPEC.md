@@ -48,7 +48,7 @@ All API endpoints require a JWT except `/auth/login` and `/health`. Passwords ha
 ## 6. Notification Engine
 
 - Runs daily via Celery Beat (separate worker, never in the request thread).
-- Invoice job: for each invoice whose approval_status is not `approved`, if age crosses 30, 60 or 180 → email the assigned engineer and their manager. Once an invoice is approved, no further alerts are sent for it.
+- Invoice job: for each invoice whose approval_status is `pending`, if age crosses 30, 60 or 180 → email the assigned engineer and their manager. Once an invoice is decided (approved or rejected), no further alerts are sent for it.
 - Document job: if a document expires within 30 days → email the contractor contact and the internal manager.
 - **Send once per threshold:** `notification_log` table with UNIQUE (entity_type, entity_id, threshold). Insert before/with send; skip if exists.
 - Email failure: retry with backoff (3 attempts), log status `failed`, never crash the job; failed rows can be retried next run.
@@ -105,7 +105,7 @@ Indexes:
 - Added fields not in the report: SR title; invoice number, amount, approval status. All amounts are in SAR (no currency column).
 - Aging basis: the report says "due date or submission date"; we use due date, falling back to submission date when due date is empty.
 - Aging bands follow the report literally: day 180 is orange and the last alert; red starts on day 181.
-- Invoice alerts stop once the invoice is approved.
+- Invoice alerts and aging colors stop once an invoice is decided (approved or rejected).
 - Document status is per document only (Valid / Expiring soon / Expired); there is no contractor-level Pass/Fail.
 - Contractors are not system users; they only receive email alerts.
 - Dates are calculated in the Asia/Riyadh timezone.

@@ -9,3 +9,19 @@ const riyadhFormat = new Intl.DateTimeFormat("en-GB", {
 export function formatRiyadh(isoUtc: string): string {
   return riyadhFormat.format(new Date(isoUtc));
 }
+
+const calendarDateFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "UTC",
+  dateStyle: "medium",
+});
+
+// A plain calendar date (YYYY-MM-DD, as the API sends invoice dates). It has no time zone,
+// so it is shown as written: formatting it as an instant would shift it by the UTC offset.
+export function formatDate(isoDate: string): string {
+  return calendarDateFormat.format(new Date(`${isoDate}T00:00:00Z`));
+}
+
+// Today's calendar date in Riyadh as YYYY-MM-DD (en-CA formats this way).
+export function riyadhToday(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh" }).format(new Date());
+}

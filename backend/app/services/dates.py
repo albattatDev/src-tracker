@@ -14,3 +14,9 @@ def riyadh_day_start_utc(day: date) -> datetime:
     """
     start = datetime.combine(day, time.min, tzinfo=ZoneInfo(settings.app_timezone))
     return start.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def riyadh_today() -> date:
+    """Today's calendar date in Asia/Riyadh. The only place that reads the clock for
+    "today"; pure code (aging) receives the date as an argument."""
+    return datetime.now(ZoneInfo(settings.app_timezone)).date()
