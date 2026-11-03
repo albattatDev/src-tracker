@@ -114,8 +114,9 @@ def test_item_has_joined_names_and_exact_fields(client, db_session, sample_reque
         "status": "assigned",
         "requester_name": "Noura Alshehri",
         "assigned_engineer_name": "Fahad Alharbi",
-        "created_at": sample_requests["B"].created_at.isoformat(),
-        "updated_at": sample_requests["B"].updated_at.isoformat(),
+        # Naive UTC from the database, sent as UTC with a trailing Z, to the second.
+        "created_at": sample_requests["B"].created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "updated_at": sample_requests["B"].updated_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
 
 
