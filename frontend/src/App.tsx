@@ -11,6 +11,7 @@ import LoginPage from "./pages/LoginPage";
 import ServiceRequestCreatePage from "./pages/ServiceRequestCreatePage";
 import ServiceRequestDetailPage from "./pages/ServiceRequestDetailPage";
 import ServiceRequestsPage from "./pages/ServiceRequestsPage";
+import UsersPage from "./pages/UsersPage";
 import { NAV_ITEMS } from "./navigation";
 
 // Pages that are built. Any nav item not listed here still shows "Coming soon".
@@ -19,6 +20,7 @@ const PAGES: Record<string, ReactElement> = {
   "/service-requests": <ServiceRequestsPage />,
   "/invoices": <InvoicesPage />,
   "/contractors": <ContractorsPage />,
+  "/users": <UsersPage />,
 };
 
 export default function App() {

@@ -66,8 +66,9 @@ def test_other_roles_are_not_listable(client, users, role):
     assert response.status_code == 422
 
 
-def test_role_is_required(client, users):
-    assert client.get("/users", headers=auth_headers(users["manager"])).status_code == 422
+def test_manager_without_role_gets_403(client, users):
+    # No role = the full user list, which is admin only.
+    assert client.get("/users", headers=auth_headers(users["manager"])).status_code == 403
 
 
 def test_users_requires_a_token(client):

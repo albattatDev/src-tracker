@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.deps import get_optional_user
-from app.core.errors import BadRequest
+from app.core.errors import BadRequest, FieldError
 from app.routers import (
     auth,
     contractors,
@@ -26,6 +26,7 @@ from app.services.document_storage import (
 from app.services.invoices import DuplicateInvoiceNumber, InvoiceNotFound
 from app.services.service_requests import ServiceRequestNotFound
 from app.services.sr_status import StatusChangeNotAllowed
+from app.services.users import UserNotFound
 
 # Default-deny: every route needs a valid JWT unless it is listed in PUBLIC_PATHS, so a
 # new router cannot be left unprotected by accident.
@@ -58,6 +59,20 @@ app.include_router(dashboard.router)
 def service_request_not_found(request: Request, error: ServiceRequestNotFound) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND, content={"detail": "Service request not found"}
+    )
+
+
+@app.exception_handler(UserNotFound)
+def user_not_found(request: Request, error: UserNotFound) -> JSONResponse:
+    return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"detail": "User not found"})
+
+
+# Same shape as a 422, so the UI puts the message on the field it names.
+@app.exception_handler(FieldError)
+def field_error(request: Request, error: FieldError) -> JSONResponse:
+    return JSONResponse(
+        status_code=error.status_code,
+        content={"detail": [{"loc": ["body", error.field], "msg": error.message}]},
     )
 
 
