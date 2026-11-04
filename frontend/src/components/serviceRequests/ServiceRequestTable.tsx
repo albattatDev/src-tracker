@@ -1,7 +1,8 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { SortOrder, SRRead, SRSortField } from "../../api/serviceRequests";
-import { useSrListLinks } from "../../hooks/useSrListLinks";
+import { useListLinks } from "../../hooks/useListLinks";
+import { SR_BASE } from "../../routes";
 import { formatRiyadh } from "../../utils/dates";
 import { PersonName } from "../Avatar";
 import { PriorityBadge } from "../Badges";
@@ -65,7 +66,7 @@ export default function ServiceRequestTable({
   compact: boolean;
   selectedId: number | undefined;
 }) {
-  const { detailPath } = useSrListLinks();
+  const { detailPath } = useListLinks(SR_BASE);
 
   return (
     <div

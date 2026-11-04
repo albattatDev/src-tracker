@@ -4,6 +4,7 @@ import type { SRRead } from "../../api/serviceRequests";
 import { useAuth } from "../../hooks/useAuth";
 import { useInvoices } from "../../hooks/useInvoices";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
+import { INVOICES_BASE } from "../../routes";
 import { formatDate } from "../../utils/dates";
 import { canAddInvoice } from "../../utils/serviceRequestActions";
 import { canViewInvoices } from "../../utils/permissions";
@@ -19,7 +20,7 @@ function InvoiceCard({ invoice }: { invoice: InvoiceOut }) {
   return (
     <li className="rounded-xl border border-line p-3">
       <div className="flex items-center justify-between gap-3">
-        <CrossLink to={`/invoices/${invoice.id}`} className="min-h-11 font-medium md:min-h-0">
+        <CrossLink to={`${INVOICES_BASE}/${invoice.id}`} className="min-h-11 font-medium md:min-h-0">
           {invoice.invoice_number}
         </CrossLink>
         <Amount value={invoice.amount} className="font-medium" />

@@ -36,7 +36,7 @@ export default function AppLayout() {
             pinned ? "md:pl-sidebar" : "md:pl-rail"
           }`}
         >
-          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b border-line bg-surface px-4 md:px-6">
+          <header className="sticky top-0 z-10 flex h-topbar shrink-0 items-center justify-between border-b border-line bg-surface px-4 md:px-6">
             <TopBarSlot
               fallback={
                 <>

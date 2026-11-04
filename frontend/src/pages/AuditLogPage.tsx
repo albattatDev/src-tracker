@@ -1,10 +1,10 @@
-import { useEffect } from "react";
 import AuditLogFilters from "../components/AuditLogFilters";
 import AuditLogTable from "../components/AuditLogTable";
 import Pagination from "../components/Pagination";
 import { useAuth } from "../hooks/useAuth";
 import { useAuditLog } from "../hooks/useAuditLog";
 import { useAuditLogListParams } from "../hooks/useAuditLogListParams";
+import { useClampPage } from "../hooks/useClampPage";
 
 export default function AuditLogPage() {
   const { user } = useAuth();
@@ -12,14 +12,7 @@ export default function AuditLogPage() {
   const query = useAuditLog(list.apiParams);
 
   const data = query.data;
-  const pageCount = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : undefined;
-  const pastTheEnd = pageCount !== undefined && list.state.page > pageCount;
-
-  // A URL such as ?page=9 on a one-page list jumps to the last real page.
-  useEffect(() => {
-    if (pageCount !== undefined && !query.isPlaceholderData) list.clampPage(pageCount);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageCount, list.state.page, query.isPlaceholderData]);
+  const { pageCount, pastTheEnd } = useClampPage(list.state.page, data, query.isPlaceholderData);
 
   return (
     <div>
@@ -57,7 +50,7 @@ export default function AuditLogPage() {
           />
           <Pagination
             page={query.data.page}
-            pageCount={pageCount ?? 1}
+            pageCount={pageCount}
             onPageChange={list.setPage}
           />
         </>

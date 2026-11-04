@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import type { InvoiceOut } from "../../api/invoices";
 import { useInvoiceDecision } from "../../hooks/useInvoiceDecision";
-import { useInvoiceListLinks } from "../../hooks/useInvoiceListLinks";
+import { useListLinks } from "../../hooks/useListLinks";
+import { INVOICES_BASE, SR_BASE } from "../../routes";
 import { formatDate } from "../../utils/dates";
 import { formatAmountNumber } from "../../utils/money";
 import { AgingBadge, ApprovalStatusBadge } from "../Badges";
@@ -27,7 +28,7 @@ export default function InvoiceTable({
   canDecide: boolean; // managers only
   dimmed: boolean; // true while the next page loads, so the old rows look "stale"
 }) {
-  const { detailPath } = useInvoiceListLinks();
+  const { detailPath } = useListLinks(INVOICES_BASE);
   const { open, dialog } = useInvoiceDecision();
 
   return (
@@ -74,7 +75,7 @@ export default function InvoiceTable({
                   {!wide && (
                     <td className="px-4 py-2">
                       <span className="relative z-10">
-                        <CrossLink to={`/service-requests/${invoice.service_request_id}`}>
+                        <CrossLink to={`${SR_BASE}/${invoice.service_request_id}`}>
                           #{invoice.service_request_id} · {invoice.service_request_title}
                         </CrossLink>
                       </span>

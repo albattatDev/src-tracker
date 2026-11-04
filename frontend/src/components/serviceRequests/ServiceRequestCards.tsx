@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import type { SRRead } from "../../api/serviceRequests";
-import { useSrListLinks } from "../../hooks/useSrListLinks";
+import { useListLinks } from "../../hooks/useListLinks";
+import { SR_BASE } from "../../routes";
 import { PersonName } from "../Avatar";
 import { PriorityBadge, StatusBadge } from "../Badges";
 
 // Mobile list: one card per request. The title link is stretched over the whole card.
 export default function ServiceRequestCards({ items, dimmed }: { items: SRRead[]; dimmed: boolean }) {
-  const { detailPath } = useSrListLinks();
+  const { detailPath } = useListLinks(SR_BASE);
 
   return (
     <ul className={`flex flex-col gap-3 ${dimmed ? "opacity-60" : ""}`}>

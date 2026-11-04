@@ -90,18 +90,6 @@ export function useAuditLogListParams() {
     });
   }
 
-  function clampPage(lastPage: number) {
-    if (state.page <= lastPage) return;
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (lastPage === 1) next.delete("page");
-        else next.set("page", String(lastPage));
-        return next;
-      },
-      { replace: true }
-    );
-  }
 
-  return { state, apiParams, hasFilters, setFilter, clearFilters, setPage, clampPage };
+  return { state, apiParams, hasFilters, setFilter, clearFilters, setPage };
 }
