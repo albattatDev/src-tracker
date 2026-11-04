@@ -1,39 +1,41 @@
 import type { Role } from "../api/client";
-import type { SRStatus } from "../api/serviceRequests";
+import { SR_STATUSES, type SRStatus } from "../api/serviceRequests";
 
-export interface StatusAction {
-  label: string;
-  next: SRStatus;
-}
+// These mirror backend/app/services/sr_status.py. They only decide which controls to show;
+// the API still enforces every rule.
 
-export interface AvailableActions {
-  canAssign: boolean;
-  statusAction: StatusAction | null;
-  canAddInvoice: boolean;
-}
-
-// Who may move a request to which status, keyed by role and the CURRENT status.
-// Mirrors the backend rules; it only hides buttons the API would reject.
-const STATUS_ACTIONS: Partial<Record<Role, Partial<Record<SRStatus, StatusAction>>>> = {
-  engineer: {
-    assigned: { label: "Start work", next: "in_progress" },
-    in_progress: { label: "Mark resolved", next: "resolved" },
-  },
-  manager: {
-    resolved: { label: "Close", next: "closed" },
-  },
+// The only forward step from each status. closed has none.
+const NEXT_STATUS: Partial<Record<SRStatus, SRStatus>> = {
+  open: "assigned",
+  assigned: "in_progress",
+  in_progress: "resolved",
+  resolved: "closed",
 };
 
-const NONE: AvailableActions = { canAssign: false, statusAction: null, canAddInvoice: false };
+// Which statuses a role may set through the status endpoint. A role not listed sets nothing.
+const ROLE_TARGETS: Partial<Record<Role, readonly SRStatus[]>> = {
+  engineer: ["in_progress", "resolved"],
+  manager: SR_STATUSES,
+};
 
-// Pure: same inputs, same answer, no React. "Assigned to this engineer" is not checked
-// here because the API only lets an engineer open their own requests (others are 404).
-export function availableActions(role: Role | undefined, status: SRStatus): AvailableActions {
-  if (!role) return NONE;
-  return {
-    canAssign: role === "manager" && (status === "open" || status === "assigned"),
-    statusAction: STATUS_ACTIONS[role]?.[status] ?? null,
-    // Only the assigned engineer may add one (the API enforces that); closed requests take none.
-    canAddInvoice: role === "engineer" && status !== "closed",
-  };
+// Reassigning is allowed until the engineer has started.
+const ASSIGNABLE: readonly SRStatus[] = ["open", "assigned"];
+
+// The one status this role may move a request to from `status`, or null. `assigned` is never
+// a target here: it needs an engineer, so it only happens through assign. "Assigned to this
+// engineer" is not checked because the API only shows an engineer their own requests.
+export function nextStatusFor(role: Role | undefined, status: SRStatus): SRStatus | null {
+  if (!role) return null;
+  const next = NEXT_STATUS[status];
+  if (!next || next === "assigned") return null;
+  return ROLE_TARGETS[role]?.includes(next) ? next : null;
+}
+
+export function canAssign(role: Role | undefined, status: SRStatus): boolean {
+  return role === "manager" && ASSIGNABLE.includes(status);
+}
+
+// Only the assigned engineer may add one (the API enforces that); closed requests take none.
+export function canAddInvoice(role: Role | undefined, status: SRStatus): boolean {
+  return role === "engineer" && status !== "closed";
 }

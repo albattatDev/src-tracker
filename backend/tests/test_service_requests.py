@@ -114,6 +114,7 @@ def test_item_has_joined_names_and_exact_fields(client, db_session, sample_reque
         "status": "assigned",
         "requester_name": "Noura Alshehri",
         "assigned_engineer_name": "Fahad Alharbi",
+        "assigned_engineer_id": sample_requests["B"].assigned_engineer_id,
         # Naive UTC from the database, sent as UTC with a trailing Z, to the second.
         "created_at": sample_requests["B"].created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "updated_at": sample_requests["B"].updated_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -125,6 +126,7 @@ def test_unassigned_request_has_null_engineer_name(client, db_session, sample_re
     item = next(item for item in items if item["id"] == sample_requests["A"].id)
 
     assert item["assigned_engineer_name"] is None
+    assert item["assigned_engineer_id"] is None
 
 
 def test_list_without_token_returns_401(client):

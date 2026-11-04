@@ -5,6 +5,7 @@ import {
   type ContractorFilterKey,
   type ContractorUrlState,
 } from "../hooks/useContractorListParams";
+import Select from "./Select";
 
 const CONTROL = "rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900";
 
@@ -62,7 +63,7 @@ export default function ContractorFilters({
       </Field>
 
       <Field label="Status">
-        <select
+        <Select
           value={state.status}
           onChange={(e) => onFilterChange("status", e.target.value)}
           className={CONTROL}
@@ -72,7 +73,7 @@ export default function ContractorFilters({
               {STATUS_LABELS[value]}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
 
       <button

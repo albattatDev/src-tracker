@@ -4,6 +4,7 @@ import type { Contractor } from "../api/contractors";
 import { useCreateContractor, useUpdateContractor } from "../hooks/useContractors";
 import { useManagers } from "../hooks/useManagers";
 import Modal from "./Modal";
+import Select from "./Select";
 
 const CONTROL = "rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900";
 
@@ -67,14 +68,14 @@ export default function ContractorFormDialog({
         </label>
         <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
           Internal manager
-          <select required value={managerId} onChange={(e) => setManagerId(e.target.value)} className={CONTROL}>
+          <Select required value={managerId} onChange={(e) => setManagerId(e.target.value)} className={CONTROL}>
             <option value="">{managers.isPending ? "Loading managers…" : "Select manager…"}</option>
             {managers.data?.map((manager) => (
               <option key={manager.id} value={manager.id}>
                 {manager.full_name} ({manager.email})
               </option>
             ))}
-          </select>
+          </Select>
           {error("internal_manager_id")}
         </label>
 

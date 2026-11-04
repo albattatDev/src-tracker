@@ -4,6 +4,7 @@ import { useAuditUsers } from "../hooks/useAuditLog";
 import type { AuditFilterKey, AuditUrlState } from "../hooks/useAuditLogListParams";
 import { entityLabel } from "../utils/auditLinks";
 import { AUDIT_ACTION_DISPLAY } from "./Badges";
+import Select from "./Select";
 
 const CONTROL = "rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900";
 
@@ -37,7 +38,7 @@ export default function AuditLogFilters({
       className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white p-3"
     >
       <Field label="Entity type">
-        <select
+        <Select
           value={state.entity ?? ""}
           onChange={(e) => onFilterChange("entity", e.target.value)}
           className={CONTROL}
@@ -48,11 +49,11 @@ export default function AuditLogFilters({
               {entityLabel(t)}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
 
       <Field label="Action">
-        <select
+        <Select
           value={state.action ?? ""}
           onChange={(e) => onFilterChange("action", e.target.value)}
           className={CONTROL}
@@ -63,11 +64,11 @@ export default function AuditLogFilters({
               {AUDIT_ACTION_DISPLAY[a].label}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
 
       <Field label="User">
-        <select
+        <Select
           value={state.user?.toString() ?? ""}
           onChange={(e) => onFilterChange("user", e.target.value)}
           className={CONTROL}
@@ -81,7 +82,7 @@ export default function AuditLogFilters({
               {u.full_name}
             </option>
           ))}
-        </select>
+        </Select>
         {users.isError && (
           <span role="alert" className="font-normal text-red-700">
             Couldn't load users
@@ -94,7 +95,7 @@ export default function AuditLogFilters({
           type="date"
           value={state.from ?? ""}
           onChange={(e) => onFilterChange("from", e.target.value)}
-          className={CONTROL}
+          className={`pr-3 ${CONTROL}`}
         />
       </Field>
 
@@ -103,7 +104,7 @@ export default function AuditLogFilters({
           type="date"
           value={state.to ?? ""}
           onChange={(e) => onFilterChange("to", e.target.value)}
-          className={CONTROL}
+          className={`pr-3 ${CONTROL}`}
         />
       </Field>
 

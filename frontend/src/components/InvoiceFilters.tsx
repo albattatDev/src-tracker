@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AGING_BANDS, APPROVAL_STATUSES } from "../api/invoices";
 import type { InvoiceFilterKey, InvoiceUrlState } from "../hooks/useInvoiceListParams";
 import { AGING_DISPLAY, APPROVAL_DISPLAY } from "./Badges";
+import Select from "./Select";
 
 const CONTROL = "rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900";
 
@@ -42,7 +43,7 @@ export default function InvoiceFilters({
       className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white p-3"
     >
       <Field label="Status">
-        <select
+        <Select
           value={state.status ?? ""}
           onChange={(e) => onFilterChange("status", e.target.value)}
           className={CONTROL}
@@ -53,11 +54,11 @@ export default function InvoiceFilters({
               {APPROVAL_DISPLAY[s].label}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
 
       <Field label="Aging band">
-        <select
+        <Select
           value={state.band ?? ""}
           onChange={(e) => onFilterChange("band", e.target.value)}
           className={CONTROL}
@@ -68,7 +69,7 @@ export default function InvoiceFilters({
               {AGING_DISPLAY[b].label}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
 
       <Field label="Invoice number">

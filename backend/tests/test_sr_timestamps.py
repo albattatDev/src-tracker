@@ -38,6 +38,7 @@ def test_sr_read_serializes_both_timestamps_with_z():
         status=SRStatus.OPEN,
         requester_name="A B",
         assigned_engineer_name=None,
+        assigned_engineer_id=None,
         created_at=moment,
         updated_at=moment,
     )

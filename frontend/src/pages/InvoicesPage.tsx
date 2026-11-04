@@ -3,6 +3,7 @@ import InvoiceFilters from "../components/InvoiceFilters";
 import InvoiceTable from "../components/InvoiceTable";
 import Pagination from "../components/Pagination";
 import { useAuth } from "../hooks/useAuth";
+import { canDecideInvoices } from "../utils/permissions";
 import { useInvoiceListParams } from "../hooks/useInvoiceListParams";
 import { useInvoices } from "../hooks/useInvoices";
 
@@ -52,7 +53,7 @@ export default function InvoicesPage() {
         <>
           <InvoiceTable
             items={query.data.items}
-            canDecide={user?.role === "manager"}
+            canDecide={canDecideInvoices(user?.role)}
             dimmed={query.isPlaceholderData}
           />
           <Pagination

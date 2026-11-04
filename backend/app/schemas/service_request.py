@@ -66,6 +66,9 @@ class SRRead(BaseModel):
     status: SRStatus
     requester_name: str
     assigned_engineer_name: str | None
+    # The id behind the name, so a client can tell which engineer is assigned without comparing
+    # display names (two engineers can share one). NULL when nobody is assigned.
+    assigned_engineer_id: int | None
     created_at: UtcDatetime
     updated_at: UtcDatetime
 

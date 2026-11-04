@@ -3,25 +3,20 @@ import { LogOut, X } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { fullName } from "../../api/client";
 import { useAuth } from "../../hooks/useAuth";
+import { useModalDialog } from "../../hooks/useModalDialog";
 import { APP_NAME } from "../../navigation";
 import { PersonName } from "../Avatar";
 import { buttonClass } from "../buttonStyles";
 import RolePill from "./RolePill";
 import SidebarNav from "./SidebarNav";
 
-// The mobile menu. Render it only while it should be open: it opens as a modal when it
-// mounts (same approach as Modal). The native <dialog> gives the backdrop, the focus trap
-// and Escape. Shows the user and Log out at the bottom.
+// The mobile menu. Render it only while it should be open (see useModalDialog). Shows the
+// user and Log out at the bottom.
 export default function MobileDrawer({ onClose }: { onClose: () => void }) {
   const { user, signOut } = useAuth();
   const { pathname } = useLocation();
-  const ref = useRef<HTMLDialogElement>(null);
+  const { ref, dialogProps } = useModalDialog(onClose);
   const openedAt = useRef(pathname);
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (dialog && !dialog.open) dialog.showModal();
-  }, []);
 
   // Any navigation closes the drawer, including back and forward.
   useEffect(() => {
@@ -42,14 +37,8 @@ export default function MobileDrawer({ onClose }: { onClose: () => void }) {
   return (
     <dialog
       ref={ref}
+      {...dialogProps}
       aria-label="Menu"
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
-      onClick={(event) => {
-        if (event.target === ref.current) onClose();
-      }}
       className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-sidebar max-w-none flex-col overflow-hidden border-r border-line bg-surface p-0 backdrop:bg-black/40 open:flex"
     >
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-line px-3">

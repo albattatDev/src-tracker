@@ -4,7 +4,7 @@ import type { AgingBand, ApprovalStatus, InvoiceOut } from "../api/invoices";
 import type { Priority, SRStatus } from "../api/serviceRequests";
 import type { UserRole } from "../api/users";
 
-const BASE = "inline-block rounded-full px-2.5 py-0.5 text-xs font-medium";
+const BASE = "inline-block shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium";
 
 interface Display {
   label: string;
@@ -31,9 +31,18 @@ export function PriorityBadge({ priority }: { priority: Priority }) {
   return <span className={`${BASE} ${className}`}>{label}</span>;
 }
 
+// The same pill with room for an icon after the label (a button that opens a menu). Its own
+// base string, so the smaller right padding does not fight BASE's px-2.5.
+const BASE_WITH_ICON =
+  "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full py-0.5 pl-2.5 pr-1.5 text-xs font-medium";
+
+// The classes of a status pill, for anything that has to look like StatusBadge.
+export function statusPillClass(status: SRStatus, trailingIcon = false): string {
+  return `${trailingIcon ? BASE_WITH_ICON : BASE} ${STATUS_DISPLAY[status].className}`;
+}
+
 export function StatusBadge({ status }: { status: SRStatus }) {
-  const { label, className } = STATUS_DISPLAY[status];
-  return <span className={`${BASE} ${className}`}>{label}</span>;
+  return <span className={statusPillClass(status)}>{STATUS_DISPLAY[status].label}</span>;
 }
 
 export const APPROVAL_DISPLAY: Record<ApprovalStatus, Display> = {
