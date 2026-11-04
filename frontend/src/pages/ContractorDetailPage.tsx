@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
+import { PersonName } from "../components/Avatar";
 import { buttonClass } from "../components/buttonStyles";
 import ConfirmDialog from "../components/ConfirmDialog";
 import ContractorDocuments from "../components/ContractorDocuments";
@@ -75,12 +76,12 @@ export default function ContractorDetailPage() {
         <h1 className="text-xl font-semibold text-gray-900">{contractor.name}</h1>
         {canWrite && (
           <div className="flex gap-2">
-            <button onClick={() => setEditing(true)} className={buttonClass("outline-neutral")}>
+            <button onClick={() => setEditing(true)} className={buttonClass("secondary")}>
               Edit
             </button>
             <button
               onClick={openConfirm}
-              className={buttonClass(activating ? "outline-neutral" : "outline-danger")}
+              className={buttonClass(activating ? "secondary" : "danger")}
             >
               {activating ? "Reactivate" : "Deactivate"}
             </button>
@@ -90,7 +91,9 @@ export default function ContractorDetailPage() {
 
       <dl className="mb-6 grid gap-4 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-3">
         <Field label="Contact email">{contractor.contact_email}</Field>
-        <Field label="Internal manager">{contractor.internal_manager_name}</Field>
+        <Field label="Internal manager">
+          <PersonName name={contractor.internal_manager_name} />
+        </Field>
         <Field label="Status">
           <ContractorStatusBadge isActive={contractor.is_active} />
         </Field>

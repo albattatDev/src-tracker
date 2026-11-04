@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { DOC_TYPES, type ContractorListItem } from "../api/contractors";
 import { useRowNavigation } from "../hooks/useRowNavigation";
+import { PersonName } from "./Avatar";
 import ContractorStatusBadge from "./ContractorStatusBadge";
 
 const CHIP = "inline-block rounded-full px-2 py-0.5 text-xs font-medium";
@@ -57,7 +58,7 @@ export default function ContractorTable({
               </td>
               <td className="whitespace-nowrap px-3 py-2 text-gray-700">{contractor.contact_email}</td>
               <td className="whitespace-nowrap px-3 py-2 text-gray-700">
-                {contractor.internal_manager_name}
+                <PersonName name={contractor.internal_manager_name} />
               </td>
               <td className="px-3 py-2">
                 <DocumentChips contractor={contractor} />

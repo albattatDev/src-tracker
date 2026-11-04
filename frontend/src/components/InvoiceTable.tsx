@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import type { Decision, InvoiceOut } from "../api/invoices";
 import { useDecideInvoice } from "../hooks/useInvoices";
 import { useRowNavigation } from "../hooks/useRowNavigation";
-import { formatAmount } from "../utils/money";
 import { formatDate } from "../utils/dates";
+import { formatAmount } from "../utils/money";
 import { AgingBadge, ApprovalStatusBadge } from "./Badges";
+import Amount from "./Amount";
 import { buttonClass } from "./buttonStyles";
 import ConfirmDialog from "./ConfirmDialog";
 
@@ -82,8 +83,8 @@ export default function InvoiceTable({
                   </Link>
                 </td>
               )}
-              <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
-                {formatAmount(invoice.amount)}
+              <td className="whitespace-nowrap px-3 py-2 text-right">
+                <Amount value={invoice.amount} />
               </td>
               <td className="whitespace-nowrap px-3 py-2 text-gray-700">
                 {invoice.due_date ? formatDate(invoice.due_date) : "—"}
@@ -99,13 +100,13 @@ export default function InvoiceTable({
                   {invoice.approval_status === "pending" && (
                     <div className="flex gap-2">
                       <button
-                        className={buttonClass("outline-success", "sm")}
+                        className={buttonClass("success", "sm")}
                         onClick={() => open(invoice, "approve")}
                       >
                         Approve
                       </button>
                       <button
-                        className={buttonClass("outline-danger", "sm")}
+                        className={buttonClass("danger", "sm")}
                         onClick={() => open(invoice, "reject")}
                       >
                         Reject
@@ -122,7 +123,7 @@ export default function InvoiceTable({
     {pending && (
       <ConfirmDialog
         title={`${DECISION_TEXT[pending.decision].verb} invoice`}
-        message={`${DECISION_TEXT[pending.decision].verb} invoice ${pending.invoice.invoice_number} (${formatAmount(pending.invoice.amount)} SAR) for #${pending.invoice.service_request_id} ${pending.invoice.service_request_title}?`}
+        message={`${DECISION_TEXT[pending.decision].verb} invoice ${pending.invoice.invoice_number} (${formatAmount(pending.invoice.amount)}) for #${pending.invoice.service_request_id} ${pending.invoice.service_request_title}?`}
         confirmLabel={
           decide.isPending
             ? DECISION_TEXT[pending.decision].running

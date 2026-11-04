@@ -27,6 +27,7 @@ dist/
 
 # Uploaded contractor documents. This is user data, not source code.
 uploads/
+docs/ui-refresh
 
 # Celery Beat schedule file. Created automatically when the scheduler runs.
 celerybeat-schedule*

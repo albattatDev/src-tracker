@@ -1,10 +1,37 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #111827;
+  --color-ink-soft: #374151;
+  --color-muted: #6b7280;
+  --color-line-strong: #d1d5db;
+  --color-line: #e5e7eb;
+  --color-fill: #f3f4f6;
+  --color-canvas: #f9fafb;
+  --color-surface: #ffffff;
+
+  --radius-field: 6px;
+  --radius-button: 8px;
+  --radius-card: 12px;
+
+  --shadow-popover: 0 8px 24px rgba(17, 24, 39, 0.14), 0 0 0 1px rgba(17, 24, 39, 0.08);
+}
+
 /* Tailwind v4's preflight sets buttons to cursor: default. Restore the pointer for
    everything clickable in one place instead of adding cursor-pointer to each button.
    This is in the base layer, so a utility class (cursor-pointer on a table row,
    disabled:cursor-not-allowed) still wins where it is set. */
 @layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 20px;
+  }
+
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   summary,

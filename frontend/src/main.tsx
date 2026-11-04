@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./hooks/useAuth";
 import { queryClient } from "./queryClient";
+import "@fontsource-variable/inter";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
