@@ -21,6 +21,10 @@
   --spacing-rail: 64px;
   --spacing-sidebar: 248px;
 
+  /* Height of the sticky top bar. h-topbar / top-topbar, and calc(100dvh - var(--spacing-topbar))
+     for anything that fills the space under it. */
+  --spacing-topbar: 3.5rem;
+
   --shadow-popover: 0 8px 24px rgba(17, 24, 39, 0.14), 0 0 0 1px rgba(17, 24, 39, 0.08);
 }
 

@@ -19,8 +19,7 @@ function InvoiceCard({ invoice }: { invoice: InvoiceOut }) {
   return (
     <li className="rounded-xl border border-line p-3">
       <div className="flex items-center justify-between gap-3">
-        {/* Phase 4 will deep link to this invoice; for now it goes to the Invoices page. */}
-        <CrossLink to="/invoices" className="min-h-11 font-medium md:min-h-0">
+        <CrossLink to={`/invoices/${invoice.id}`} className="min-h-11 font-medium md:min-h-0">
           {invoice.invoice_number}
         </CrossLink>
         <Amount value={invoice.amount} className="font-medium" />

@@ -12,7 +12,7 @@ export default function PanelHeader({
   onClose: () => void;
 }) {
   return (
-    <div className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-line bg-surface px-4">
+    <div className="sticky top-0 z-10 flex h-topbar shrink-0 items-center justify-between gap-2 border-b border-line bg-surface px-4">
       <div className="min-w-0 truncate">{breadcrumb}</div>
       <button
         type="button"

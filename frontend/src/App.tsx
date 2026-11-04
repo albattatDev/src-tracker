@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
+import InvoiceDetailRoute from "./components/invoices/InvoiceDetailRoute";
 import NewRequestRoute from "./components/serviceRequests/NewRequestRoute";
 import ServiceRequestDetailRoute from "./components/serviceRequests/ServiceRequestDetailRoute";
 import { RequireAuth, RequireRole } from "./components/RouteGuards";
@@ -38,6 +39,7 @@ const PAGE_CHILDREN: Record<string, ReactElement> = {
       <Route path=":id" element={<ServiceRequestDetailRoute />} />
     </>
   ),
+  "/invoices": <Route path=":id" element={<InvoiceDetailRoute />} />,
 };
 
 export default function App() {

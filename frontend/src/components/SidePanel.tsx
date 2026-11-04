@@ -14,6 +14,7 @@ export default function SidePanel({
   storageKey,
   breadcrumb,
   onClose,
+  footer,
   children,
 }: {
   "aria-label": string;
@@ -21,6 +22,7 @@ export default function SidePanel({
   storageKey: string;
   breadcrumb: ReactNode;
   onClose: () => void;
+  footer?: ReactNode; // pinned under the scrolling content (e.g. the action buttons)
   children: ReactNode;
 }) {
   const panelRef = useRef<HTMLElement>(null);
@@ -44,13 +46,16 @@ export default function SidePanel({
       ref={panelRef}
       aria-label={ariaLabel}
       style={{ width: resize.width }}
-      className="sticky top-14 flex h-[calc(100dvh-3.5rem)] shrink-0 self-start border-l border-line bg-surface"
+      className="sticky top-topbar flex h-[calc(100dvh-var(--spacing-topbar))] shrink-0 self-start border-l border-line bg-surface"
     >
       {/* The handle is outside the scrolling part, so it stays put while the content scrolls. */}
       <PanelResizeHandle panelRef={panelRef} resize={resize} />
-      <div className="min-w-0 flex-1 overflow-y-auto">
-        <PanelHeader breadcrumb={breadcrumb} onClose={onClose} />
-        {children}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <PanelHeader breadcrumb={breadcrumb} onClose={onClose} />
+          {children}
+        </div>
+        {footer && <div className="shrink-0">{footer}</div>}
       </div>
     </aside>
   );
