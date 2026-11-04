@@ -10,12 +10,14 @@ export default function SlideOver({
   width,
   breadcrumb,
   onClose,
+  footer,
   children,
 }: {
   "aria-label": string;
   width: number;
   breadcrumb: ReactNode;
   onClose: () => void;
+  footer?: ReactNode; // pinned under the scrolling content (e.g. the action buttons)
   children: ReactNode;
 }) {
   const { ref, dialogProps } = useModalDialog(onClose);
@@ -30,6 +32,7 @@ export default function SlideOver({
     >
       <PanelHeader breadcrumb={breadcrumb} onClose={onClose} />
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+      {footer && <div className="shrink-0">{footer}</div>}
     </dialog>
   );
 }

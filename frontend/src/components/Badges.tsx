@@ -77,7 +77,7 @@ export function AgingBadge({
   invoice: Pick<InvoiceOut, "approval_status" | "age_days" | "aging_band">;
 }) {
   if (invoice.approval_status !== "pending") {
-    return <span className="text-gray-400">—</span>;
+    return <span className="text-muted">—</span>;
   }
   const { label, className } = AGING_DISPLAY[invoice.aging_band];
   return (

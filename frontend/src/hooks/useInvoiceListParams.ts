@@ -1,4 +1,5 @@
 import { useSearchParams } from "react-router-dom";
+import { useDebouncedSearch } from "./useDebouncedSearch";
 import {
   AGING_BANDS,
   APPROVAL_STATUSES,
@@ -21,6 +22,12 @@ function positiveInt(value: string | null): number | undefined {
   if (value === null || !/^\d+$/.test(value)) return undefined;
   const number = Number(value);
   return Number.isSafeInteger(number) && number >= 1 ? number : undefined;
+}
+
+// The search box text (what is typed, committed to the URL after a pause).
+export interface InvoiceSearch {
+  text: string;
+  setText: (next: string) => void;
 }
 
 export interface InvoiceUrlState {
@@ -67,7 +74,12 @@ export function useInvoiceListParams() {
     );
   }
 
+  // The search box keeps what is typed and commits it to the URL after a pause. It lives here,
+  // next to `q` and clearFilters, so that Clear also drops text that has not been committed yet.
+  const { text, setText, reset } = useDebouncedSearch(state.q, (next) => setFilter("q", next));
+
   function clearFilters() {
+    reset();
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       for (const key of FILTER_KEYS) next.delete(key);
@@ -97,5 +109,14 @@ export function useInvoiceListParams() {
     );
   }
 
-  return { state, apiParams, hasFilters, setFilter, clearFilters, setPage, clampPage };
+  return {
+    state,
+    apiParams,
+    hasFilters,
+    search: { text, setText },
+    setFilter,
+    clearFilters,
+    setPage,
+    clampPage,
+  };
 }

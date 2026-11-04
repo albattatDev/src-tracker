@@ -3,6 +3,7 @@
 Project: Service Request & Compliance Tracker (SRC-T). Full requirements in `SPEC.md` and the database design in `docs/erd.md` — read both before any feature work. Do not add or rename tables or columns without asking.
 
 ## Stack
+
 - Backend: Python 3.12, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2
 - DB: MySQL 8 (driver: PyMySQL), utf8mb4, InnoDB
 - Background jobs: Celery + Celery Beat, Redis as broker
@@ -13,6 +14,7 @@ Project: Service Request & Compliance Tracker (SRC-T). Full requirements in `SPE
 - Everything runs with `docker compose up`
 
 ## Layout
+
 ```
 backend/app/
   core/        config.py, database.py, security.py, deps.py (auth + role guards)
@@ -27,6 +29,7 @@ docs/          erd.png, schema.sql
 ```
 
 ## Commands
+
 - Start all: `docker compose up --build`
 - Migrations: `docker compose exec api alembic upgrade head`
 - New migration: `docker compose exec api alembic revision --autogenerate -m "msg"`
@@ -36,6 +39,7 @@ docs/          erd.png, schema.sql
 - URLs: API docs http://localhost:8000/docs · Frontend http://localhost:5173 · Mailpit http://localhost:8025
 
 ## Feature workflow (follow for every feature)
+
 1. Before writing any code for a feature, run `git branch --show-current`. If it is `main`, stop and remind me to create a branch: `git checkout -b feature/<short-name>`. Wait until I confirm.
 2. Plan the feature and show me the plan before coding.
 3. Build it, then run the tests. Do not call the feature done until tests pass and I have tried it. Remind me that I can run `/explain` on anything I do not fully understand.
@@ -44,6 +48,7 @@ docs/          erd.png, schema.sql
 6. Remind me to push the branch and open a pull request into `main` on GitHub.
 
 ## Rules
+
 - Business logic lives in `services/`, not in routers. Aging and compliance are pure functions with unit tests.
 - Store timestamps in UTC; compute "today" in Asia/Riyadh.
 - Every write endpoint checks role via a dependency (`require_role(...)`) and writes to the audit log.
@@ -53,3 +58,12 @@ docs/          erd.png, schema.sql
 - Keep secrets in `.env` (provide `.env.example`), never commit `.env`.
 - Work one feature at a time; run tests before saying a feature is done.
 - If something still fails after two attempts, stop and suggest I run `/debug` instead of trying more fixes.
+
+  UI rules learned:
+  - Use useModalDialog for every dialog; never call showModal() directly.
+  - Use overlayIsOpen() for "is something on top"; the toast does not count.
+  - Never add dynamic Tailwind class strings; use tokens or inline style for state widths.
+  - Render one component per breakpoint with useBreakpoint, not two hidden with CSS.
+  - Permissions only through utils/permissions.ts.
+  - Every pill/badge: whitespace-nowrap shrink-0.
+  - Touch targets 44px on mobile; chevron lives inside the trigger.

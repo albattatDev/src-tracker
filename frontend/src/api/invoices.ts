@@ -66,6 +66,10 @@ export function listInvoices(params: InvoiceListParams): Promise<InvoicePage> {
   return apiFetch<InvoicePage>(`/invoices${qs ? `?${qs}` : ""}`);
 }
 
+export function getInvoice(id: number): Promise<InvoiceOut> {
+  return apiFetch<InvoiceOut>(`/invoices/${id}`);
+}
+
 export function createInvoice(data: InvoiceCreate): Promise<InvoiceOut> {
   return sendJson<InvoiceOut>("POST", "/invoices", data);
 }
