@@ -9,7 +9,8 @@ export type ButtonVariant =
   | "danger";
 
 // sm 32 for table rows, md 36 elsewhere, touch 44 on mobile, touch-lg 48 for sticky mobile actions.
-export type ButtonSize = "sm" | "md" | "touch" | "touch-lg";
+// icon (40x40) and icon-touch (44x44) are square, icon-only buttons with no padding that never shrink.
+export type ButtonSize = "sm" | "md" | "touch" | "touch-lg" | "icon" | "icon-touch";
 
 const BASE =
   "inline-flex items-center justify-center gap-1.5 rounded-button border font-medium whitespace-nowrap " +
@@ -20,6 +21,8 @@ const SIZES: Record<ButtonSize, string> = {
   md: "h-9 px-4 text-sm",
   touch: "h-11 px-4 text-sm",
   "touch-lg": "h-12 px-5 text-base",
+  icon: "h-10 w-10 shrink-0 p-0",
+  "icon-touch": "h-11 w-11 shrink-0 p-0",
 };
 
 const VARIANTS: Record<ButtonVariant, string> = {

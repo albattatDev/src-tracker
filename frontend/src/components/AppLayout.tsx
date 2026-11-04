@@ -1,78 +1,75 @@
-import { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { LogOut, Menu } from "lucide-react";
+import { Outlet, useLocation } from "react-router-dom";
+import { fullName } from "../api/client";
 import { useAuth } from "../hooks/useAuth";
-import { navItemsFor } from "../navigation";
+import { useSidebarPinned } from "../hooks/useSidebarPinned";
+import { pageTitleFor } from "../navigation";
+import Avatar from "./Avatar";
+import { buttonClass } from "./buttonStyles";
+import RolePill from "./shell/RolePill";
+import DesktopSidebar from "./shell/DesktopSidebar";
+import MobileDrawer from "./shell/MobileDrawer";
 
 export default function AppLayout() {
   const { user, signOut } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { pathname } = useLocation();
+  const [pinned, togglePinned] = useSidebarPinned();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
+  // Every way of closing the drawer returns focus to the Menu button. The page behind a modal
+  // dialog is inert, so this can only run once the drawer has been removed.
+  const wasOpen = useRef(false);
   useEffect(() => {
-    if (!menuOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [menuOpen]);
+    if (wasOpen.current && !drawerOpen) menuButtonRef.current?.focus();
+    wasOpen.current = drawerOpen;
+  }, [drawerOpen]);
 
   if (!user) return null;
 
-  const links = navItemsFor(user.role).map((item) => (
-    <NavLink
-      key={item.path}
-      to={item.path}
-      onClick={() => setMenuOpen(false)}
-      className={({ isActive }) =>
-        `block rounded-md px-3 py-2 text-sm font-medium ${
-          isActive
-            ? "bg-gray-900 text-white"
-            : "text-gray-700 hover:bg-gray-100"
-        }`
-      }
-    >
-      {item.label}
-    </NavLink>
-  ));
+  const name = fullName(user);
 
   return (
-    <div className="min-h-screen bg-gray-50 md:flex">
-      {menuOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/40 md:hidden"
-          onClick={() => setMenuOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+    <div className="min-h-screen bg-canvas">
+      {/* Desktop rail. Hover overlays the content; only pinning moves it (md:pl-rail / md:pl-sidebar below). */}
+      <DesktopSidebar pinned={pinned} onTogglePin={togglePinned} />
 
-      <aside
-        className={`fixed inset-y-0 left-0 z-30 w-64 border-r border-gray-200 bg-white p-4 transition-transform md:static md:translate-x-0 ${
-          menuOpen ? "translate-x-0" : "-translate-x-full"
+      {drawerOpen && <MobileDrawer onClose={closeDrawer} />}
+
+      <div
+        className={`flex min-h-screen min-w-0 flex-col transition-[padding] duration-150 motion-reduce:transition-none ${
+          pinned ? "md:pl-sidebar" : "md:pl-rail"
         }`}
       >
-        <div className="mb-6 px-3 text-lg font-semibold text-gray-900">SRC-T</div>
-        <nav aria-label="Main" className="space-y-1">
-          {links}
-        </nav>
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
-          <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b border-line bg-surface px-4 md:px-6">
+          <div className="flex min-w-0 items-center gap-3 md:hidden">
             <button
-              onClick={() => setMenuOpen(true)}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 md:hidden"
+              ref={menuButtonRef}
+              type="button"
+              onClick={() => setDrawerOpen(true)}
               aria-label="Open menu"
-              aria-expanded={menuOpen}
+              aria-expanded={drawerOpen}
+              className={buttonClass("ghost", "icon-touch")}
             >
-              Menu
+              <Menu size={18} strokeWidth={2} aria-hidden="true" />
             </button>
-            <span className="font-medium text-gray-900">Hello, {user.first_name}</span>
+            <span className="truncate text-base font-semibold">{pageTitleFor(pathname)}</span>
           </div>
+
+          <div className="hidden items-center gap-3 md:flex">
+            <Avatar name={name} size={28} />
+            <span className="font-medium">Hello, {user.first_name}</span>
+            <RolePill role={user.role} />
+          </div>
+
           <button
+            type="button"
             onClick={signOut}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+            className={`${buttonClass("secondary", "md")} hidden md:inline-flex`}
           >
+            <LogOut size={18} strokeWidth={2} aria-hidden="true" />
             Log out
           </button>
         </header>
