@@ -1,4 +1,3 @@
-import re
 from datetime import date
 from typing import Annotated, Self
 
@@ -12,25 +11,14 @@ from pydantic import (
 )
 
 from app.models import DocType
-from app.schemas.types import UtcDatetime
+from app.schemas.types import UtcDatetime, check_email
 from app.services.compliance import DocumentStatus
-
-# A deliberately simple check (one @, a dot in the domain, no spaces). It catches typos
-# without adding the email-validator dependency.
-_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-
-
-def _check_email(value: str) -> str:
-    if not _EMAIL.match(value):
-        raise ValueError("Enter a valid email address")
-    return value
-
 
 ContractorName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 ContactEmail = Annotated[
     str,
     StringConstraints(strip_whitespace=True, min_length=3, max_length=255),
-    AfterValidator(_check_email),
+    AfterValidator(check_email),
 ]
 
 

@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -20,3 +21,14 @@ def _to_utc_z(value: datetime) -> str:
 # Use this for every timestamp a schema sends to the client, so the browser never
 # has to guess the time zone. It only changes the JSON output, not validation.
 UtcDatetime = Annotated[datetime, PlainSerializer(_to_utc_z, return_type=str, when_used="json")]
+
+
+# A deliberately simple check (one @, a dot in the domain, no spaces). It catches typos
+# without adding the email-validator dependency.
+_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def check_email(value: str) -> str:
+    if not _EMAIL.match(value):
+        raise ValueError("Enter a valid email address")
+    return value

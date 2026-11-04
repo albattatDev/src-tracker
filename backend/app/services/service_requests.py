@@ -137,6 +137,21 @@ def _read_required(db: Session, *conditions: ColumnElement[bool]) -> SRRead:
     return SRRead.model_validate(row)
 
 
+def count_in_progress_for_engineer(db: Session, engineer_id: int) -> int:
+    """How many requests assigned to this engineer are in progress."""
+    return (
+        db.scalar(
+            select(func.count())
+            .select_from(ServiceRequest)
+            .where(
+                ServiceRequest.assigned_engineer_id == engineer_id,
+                ServiceRequest.status == SRStatus.IN_PROGRESS,
+            )
+        )
+        or 0
+    )
+
+
 def lock_visible_request(db: Session, user: User, request_id: int) -> ServiceRequest:
     """The request as a row this user may see, locked until the commit so two people
     changing the same request cannot both pass their checks on the same old status.

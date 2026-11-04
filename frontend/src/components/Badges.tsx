@@ -1,6 +1,7 @@
 import type { DocumentStatus } from "../api/contractors";
 import type { AgingBand, ApprovalStatus, InvoiceOut } from "../api/invoices";
 import type { Priority, SRStatus } from "../api/serviceRequests";
+import type { UserRole } from "../api/users";
 
 const BASE = "inline-block rounded-full px-2.5 py-0.5 text-xs font-medium";
 
@@ -115,4 +116,16 @@ export function DocumentStatusBadge({
       {documentStatusText(status, daysLeft)}
     </span>
   );
+}
+
+export const ROLE_DISPLAY: Record<UserRole, Display> = {
+  operations: { label: "Operations", className: "bg-blue-100 text-blue-800" },
+  engineer: { label: "Engineer", className: "bg-indigo-100 text-indigo-800" },
+  manager: { label: "Manager", className: "bg-amber-100 text-amber-800" },
+  admin: { label: "Admin", className: "bg-gray-800 text-white" },
+};
+
+export function RoleBadge({ role }: { role: UserRole }) {
+  const { label, className } = ROLE_DISPLAY[role];
+  return <span className={`${BASE} ${className}`}>{label}</span>;
 }

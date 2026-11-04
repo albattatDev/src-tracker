@@ -28,10 +28,14 @@ class AuditEntity(str, enum.Enum):
     INVOICE = "invoice"
     CONTRACTOR = "contractor"
     CONTRACTOR_DOCUMENT = "contractor_document"
+    USER = "user"
 
 
 # Bookkeeping columns that change on every write and say nothing about what was edited.
 _NOISE_COLUMNS = frozenset({"id", "created_at", "updated_at"})
+# Columns that must never reach audit_log. Excluded here, in the one place that reads row
+# values, so no caller has to remember to strip them.
+SECRET_COLUMNS = frozenset({"password_hash"})
 
 
 def row_values(row: Base) -> dict[str, Any]:
@@ -43,7 +47,7 @@ def row_values(row: Base) -> dict[str, Any]:
     return {
         column.key: getattr(row, column.key)
         for column in inspect(row).mapper.column_attrs
-        if column.key not in _NOISE_COLUMNS
+        if column.key not in _NOISE_COLUMNS | SECRET_COLUMNS
     }
 
 
