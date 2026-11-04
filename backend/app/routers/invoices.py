@@ -7,14 +7,20 @@ from app.core.database import get_db
 from app.core.deps import require_role
 from app.models import ApprovalStatus, User, UserRole
 from app.schemas.invoice import InvoiceCreate, InvoiceListParams, InvoiceOut, InvoicePage
-from app.services.invoices import create_invoice, decide_invoice, get_invoice, list_invoices
+from app.services.invoices import (
+    INVOICE_VIEWER_ROLES,
+    create_invoice,
+    decide_invoice,
+    get_invoice,
+    list_invoices,
+)
 
 # Service errors (not found, duplicate number, not allowed, invalid approval change) become
 # 4xx answers in the handlers registered in app.main.
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
 # Operations never sees invoices.
-VIEWERS = (UserRole.ENGINEER, UserRole.MANAGER, UserRole.ADMIN)
+VIEWERS = INVOICE_VIEWER_ROLES
 
 
 @router.get("", response_model=InvoicePage)
