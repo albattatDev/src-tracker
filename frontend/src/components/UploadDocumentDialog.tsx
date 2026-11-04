@@ -152,7 +152,7 @@ export default function UploadDocumentDialog({
         )}
 
         <div className="mt-2 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className={buttonClass("outline-neutral")}>
+          <button type="button" onClick={onClose} className={buttonClass("secondary")}>
             Cancel
           </button>
           <button

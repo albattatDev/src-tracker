@@ -1,3 +1,4 @@
+import { Upload } from "lucide-react";
 import { useState } from "react";
 import {
   DOC_TYPES,
@@ -10,7 +11,6 @@ import { formatDate, formatRiyadh } from "../utils/dates";
 import { DocumentStatusBadge } from "./Badges";
 import { buttonClass } from "./buttonStyles";
 import DownloadButton from "./DownloadButton";
-import { UploadIcon } from "./icons";
 import UploadDocumentDialog from "./UploadDocumentDialog";
 
 const COLUMNS = 6;
@@ -139,9 +139,9 @@ export default function ContractorDocuments({
                         onClick={() => setUploading(docType)}
                         disabled={!isActive}
                         title={isActive ? undefined : "Reactivate this contractor to upload"}
-                        className={`${buttonClass("outline-neutral", "sm")} inline-flex items-center gap-1.5`}
+                        className={buttonClass("secondary", "sm")}
                       >
-                        <UploadIcon />
+                        <Upload className="size-4" />
                         {document ? "Replace" : "Upload"}
                       </button>
                     </td>

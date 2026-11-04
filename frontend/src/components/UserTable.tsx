@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { AdminUser } from "../api/users";
 import { useRowNavigation } from "../hooks/useRowNavigation";
+import { PersonName } from "./Avatar";
 import ContractorStatusBadge from "./ContractorStatusBadge";
 import { RoleBadge } from "./Badges";
 
@@ -24,7 +25,7 @@ export default function UserTable({ items }: { items: AdminUser[] }) {
             <tr key={user.id} {...rowProps(`/users?edit=${user.id}`)}>
               <td className="whitespace-nowrap px-3 py-2 font-medium">
                 <Link to={`/users?edit=${user.id}`} className="text-gray-900 hover:underline">
-                  {user.full_name}
+                  <PersonName name={user.full_name} />
                 </Link>
               </td>
               <td className="whitespace-nowrap px-3 py-2 text-gray-700">{user.email}</td>

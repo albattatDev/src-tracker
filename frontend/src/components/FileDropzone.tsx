@@ -1,7 +1,7 @@
+import { FileText, Image, X } from "lucide-react";
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { formatFileSize } from "../utils/fileSize";
 import { buttonClass } from "./buttonStyles";
-import { CloseIcon, DocumentIcon, ImageIcon } from "./icons";
 
 // What the file card says. The caller works it out (it knows about the upload and the checks);
 // this component only draws it.
@@ -100,10 +100,10 @@ export default function FileDropzone({
             dragging ? HIGHLIGHT : "border-gray-300 bg-white"
           }`}
         >
-          <DocumentIcon className="size-8 text-gray-400" />
+          <FileText className="size-8 text-gray-400" />
           <p className="text-sm font-medium text-gray-900">Drag and drop a file here</p>
           <p className="text-xs text-gray-500">PDF, JPG, PNG up to 10 MB</p>
-          <button type="button" onClick={openPicker} className={buttonClass("outline-neutral", "sm")}>
+          <button type="button" onClick={openPicker} className={buttonClass("secondary", "sm")}>
             Browse files
           </button>
         </div>
@@ -137,7 +137,7 @@ function FileCard({
   onCancelUpload: () => void;
 }) {
   const isImage = /\.(jpe?g|png)$/i.test(file.name);
-  const Icon = isImage ? ImageIcon : DocumentIcon;
+  const Icon = isImage ? Image : FileText;
   const border = dragging
     ? HIGHLIGHT
     : status.kind === "failed"
@@ -182,7 +182,7 @@ function FileCard({
       </div>
 
       {(status.kind === "ready" || status.kind === "failed") && (
-        <button type="button" onClick={onReplace} className={buttonClass("outline-neutral", "sm")}>
+        <button type="button" onClick={onReplace} className={buttonClass("secondary", "sm")}>
           Replace
         </button>
       )}
@@ -191,9 +191,9 @@ function FileCard({
           type="button"
           onClick={onCancelUpload}
           aria-label="Cancel upload"
-          className={buttonClass("outline-neutral", "sm")}
+          className={buttonClass("secondary", "sm")}
         >
-          <CloseIcon />
+          <X className="size-4" />
         </button>
       )}
     </div>

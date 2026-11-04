@@ -44,7 +44,7 @@ export default function DashboardPage() {
         <button
           onClick={() => query.refetch()}
           disabled={query.isFetching}
-          className={buttonClass("outline-neutral")}
+          className={buttonClass("secondary")}
         >
           {query.isFetching ? "Refreshing…" : "Refresh"}
         </button>

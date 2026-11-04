@@ -6,6 +6,7 @@ import { changedFields, fieldLabel, formatValue, summary } from "../utils/auditD
 import { entityLabel, entityLink } from "../utils/auditLinks";
 import { formatRiyadh } from "../utils/dates";
 import { AuditActionBadge } from "./Badges";
+import { PersonName } from "./Avatar";
 
 const COLUMNS = 5;
 
@@ -96,7 +97,11 @@ export default function AuditLogTable({
                     {formatRiyadh(row.created_at)}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-gray-900">
-                    {row.user ? row.user.full_name : <span className="text-gray-500">System</span>}
+                    {row.user ? (
+                      <PersonName name={row.user.full_name} />
+                    ) : (
+                      <span className="text-gray-500">System</span>
+                    )}
                   </td>
                   <td className="px-3 py-2">
                     <AuditActionBadge action={row.action} />
