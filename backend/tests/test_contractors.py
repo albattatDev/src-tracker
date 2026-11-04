@@ -1,11 +1,9 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime
 
 import pytest
 
-from app.models import AuditLog, Contractor, ContractorDocument, DocType, UserRole
-from tests.helpers import auth_headers
-
-TODAY = date(2026, 11, 3)
+from app.models import AuditLog, Contractor, DocType, UserRole
+from tests.helpers import TODAY, auth_headers
 
 
 @pytest.fixture(autouse=True)
@@ -13,41 +11,6 @@ def fixed_today(monkeypatch):
     # The list reads "today" in one module, document statuses in the other.
     monkeypatch.setattr("app.services.contractors.riyadh_today", lambda: TODAY)
     monkeypatch.setattr("app.services.contractor_documents.riyadh_today", lambda: TODAY)
-
-
-@pytest.fixture
-def make_contractor(db_session, users):
-    def _make(name="Acme Safety", manager="manager", is_active=True, email="acme@example.com"):
-        contractor = Contractor(
-            name=name,
-            contact_email=email,
-            internal_manager_id=users[manager].id,
-            is_active=is_active,
-        )
-        db_session.add(contractor)
-        db_session.commit()
-        return contractor
-
-    return _make
-
-
-@pytest.fixture
-def make_document(db_session, users):
-    def _make(contractor, doc_type=DocType.HIP, days=90, uploaded_at=None, filename="a.pdf"):
-        document = ContractorDocument(
-            contractor_id=contractor.id,
-            doc_type=doc_type,
-            file_path=f"contractors/{contractor.id}/{filename}",
-            original_filename=filename,
-            expiry_date=TODAY + timedelta(days=days),
-            uploaded_by=users["manager"].id,
-            uploaded_at=uploaded_at or datetime(2026, 10, 1, 8, 0, 0),
-        )
-        db_session.add(document)
-        db_session.commit()
-        return document
-
-    return _make
 
 
 def new_contractor_body(users, **overrides):
