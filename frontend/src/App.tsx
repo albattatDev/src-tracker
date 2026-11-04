@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
 import { RequireAuth, RequireRole } from "./components/RouteGuards";
+import AuditLogPage from "./pages/AuditLogPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import ContractorDetailPage from "./pages/ContractorDetailPage";
 import ContractorsPage from "./pages/ContractorsPage";
@@ -20,6 +21,7 @@ const PAGES: Record<string, ReactElement> = {
   "/service-requests": <ServiceRequestsPage />,
   "/invoices": <InvoicesPage />,
   "/contractors": <ContractorsPage />,
+  "/audit-log": <AuditLogPage />,
   "/users": <UsersPage />,
 };
 

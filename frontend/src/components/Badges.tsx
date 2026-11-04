@@ -1,3 +1,4 @@
+import type { AuditAction } from "../api/audit";
 import type { DocumentStatus } from "../api/contractors";
 import type { AgingBand, ApprovalStatus, InvoiceOut } from "../api/invoices";
 import type { Priority, SRStatus } from "../api/serviceRequests";
@@ -127,5 +128,21 @@ export const ROLE_DISPLAY: Record<UserRole, Display> = {
 
 export function RoleBadge({ role }: { role: UserRole }) {
   const { label, className } = ROLE_DISPLAY[role];
+  return <span className={`${BASE} ${className}`}>{label}</span>;
+}
+
+export const AUDIT_ACTION_DISPLAY: Record<AuditAction, Display> = {
+  create: { label: "Create", className: "bg-green-100 text-green-800" },
+  update: { label: "Update", className: "bg-blue-100 text-blue-800" },
+  delete: { label: "Delete", className: "bg-red-100 text-red-800" },
+  approve: { label: "Approve", className: "bg-green-100 text-green-800" },
+  assign: { label: "Assign", className: "bg-indigo-100 text-indigo-800" },
+  reject: { label: "Reject", className: "bg-red-100 text-red-800" },
+};
+
+// The API sends action as a plain string; an action this UI does not know is shown as is, grey.
+export function AuditActionBadge({ action }: { action: string }) {
+  const known = (AUDIT_ACTION_DISPLAY as Record<string, Display | undefined>)[action];
+  const { label, className } = known ?? { label: action, className: "bg-gray-100 text-gray-700" };
   return <span className={`${BASE} ${className}`}>{label}</span>;
 }
