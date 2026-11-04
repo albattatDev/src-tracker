@@ -23,6 +23,13 @@ export const VIEW_INVOICES_ROLES: Role[] = ["engineer", "manager", "admin"];
 export const canViewInvoices = (role: MaybeRole) => has(VIEW_INVOICES_ROLES, role);
 export const canDecideInvoices = (role: MaybeRole) => role === "manager";
 
+// Users page: admins only. The audit log links an entry about a user there.
+export const VIEW_USERS_ROLES: Role[] = ["admin"];
+export const canViewUsers = (role: MaybeRole) => has(VIEW_USERS_ROLES, role);
+
+// Audit log: read-only, for managers and admins.
+export const VIEW_AUDIT_ROLES: Role[] = ["manager", "admin"];
+
 // Contractors: admins can look but not change.
 export const VIEW_CONTRACTORS_ROLES: Role[] = ["manager", "admin"];
 export const canWriteContractors = (role: MaybeRole) => role === "manager";

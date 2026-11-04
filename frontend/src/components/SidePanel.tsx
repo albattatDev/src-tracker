@@ -13,7 +13,6 @@ export default function SidePanel({
   defaultWidth,
   storageKey,
   breadcrumb,
-  actions,
   onClose,
   footer,
   children,
@@ -22,7 +21,6 @@ export default function SidePanel({
   defaultWidth: number;
   storageKey: string;
   breadcrumb: ReactNode;
-  actions?: ReactNode; // header buttons next to the close button
   onClose: () => void;
   footer?: ReactNode; // pinned under the scrolling content (e.g. the action buttons)
   children: ReactNode;
@@ -54,7 +52,7 @@ export default function SidePanel({
       <PanelResizeHandle panelRef={panelRef} resize={resize} />
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <PanelHeader breadcrumb={breadcrumb} actions={actions} onClose={onClose} />
+          <PanelHeader breadcrumb={breadcrumb} onClose={onClose} />
           {children}
         </div>
         {footer && <div className="shrink-0">{footer}</div>}

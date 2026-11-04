@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models import AuditLog, User
 from app.schemas.audit import AuditListParams, AuditLogOut, AuditLogPage, AuditUser
+from app.services.audit_labels import EntryLabels, resolve_labels
 from app.services.dates import riyadh_day_conditions
 
 
@@ -18,6 +19,21 @@ def _audit_conditions(params: AuditListParams) -> list[ColumnElement[bool]]:
         conditions.append(AuditLog.user_id == params.user_id)
     conditions += riyadh_day_conditions(AuditLog.created_at, params.date_from, params.date_to)
     return conditions
+
+
+def _to_out(entry: AuditLog, uid: int | None, uname: str | None, labels: EntryLabels) -> AuditLogOut:
+    return AuditLogOut(
+        id=entry.id,
+        created_at=entry.created_at,
+        user=AuditUser(id=uid, full_name=uname) if uid is not None else None,
+        action=entry.action,
+        entity_type=entry.entity_type,
+        entity_id=entry.entity_id,
+        old_values=entry.old_values,
+        new_values=entry.new_values,
+        entity_label=labels.entity_label,
+        value_labels=labels.value_labels,
+    )
 
 
 def list_audit_log(db: Session, params: AuditListParams) -> AuditLogPage:
@@ -37,19 +53,11 @@ def list_audit_log(db: Session, params: AuditListParams) -> AuditLogPage:
             .limit(params.page_size)
             .offset(offset)
         )
-        for entry, uid, uname in db.execute(query).all():
-            items.append(
-                AuditLogOut(
-                    id=entry.id,
-                    created_at=entry.created_at,
-                    user=AuditUser(id=uid, full_name=uname) if uid is not None else None,
-                    action=entry.action,
-                    entity_type=entry.entity_type,
-                    entity_id=entry.entity_id,
-                    old_values=entry.old_values,
-                    new_values=entry.new_values,
-                )
-            )
+        rows = db.execute(query).all()
+        # One lookup per entity type for the whole page, not one per row.
+        labels = resolve_labels(db, [entry for entry, _, _ in rows])
+        for entry, uid, uname in rows:
+            items.append(_to_out(entry, uid, uname, labels[entry.id]))
     return AuditLogPage(items=items, total=total, page=params.page, page_size=params.page_size)
 
 
@@ -61,3 +69,16 @@ def list_audit_users(db: Session) -> list[AuditUser]:
         .order_by(User.full_name, User.id)
     ).all()
     return [AuditUser(id=uid, full_name=name) for uid, name in rows]
+
+
+def get_audit_entry(db: Session, entry_id: int) -> AuditLogOut | None:
+    """One audit row with the same shape as a list item, or None when it does not exist."""
+    row = db.execute(
+        select(AuditLog, User.id.label("uid"), User.full_name.label("uname"))
+        .outerjoin(User, AuditLog.user_id == User.id)
+        .where(AuditLog.id == entry_id)
+    ).first()
+    if row is None:
+        return None
+    entry, uid, uname = row
+    return _to_out(entry, uid, uname, resolve_labels(db, [entry])[entry.id])

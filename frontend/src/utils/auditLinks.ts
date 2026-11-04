@@ -1,6 +1,7 @@
 import type { Role } from "../api/client";
 import type { AuditLogOut } from "../api/audit";
 import { CONTRACTORS_BASE, SR_BASE } from "../routes";
+import { canViewUsers } from "./permissions";
 
 export const ENTITY_LABEL: Record<string, string> = {
   service_request: "Service request",
@@ -12,6 +13,13 @@ export const ENTITY_LABEL: Record<string, string> = {
 
 export function entityLabel(entityType: string): string {
   return ENTITY_LABEL[entityType] ?? entityType;
+}
+
+// The entity as written in the list and the detail: "Contractor · Eastline Maintenance", or
+// "Contractor #3" when nothing names it (the API's entity_label is null).
+export function entityText(row: AuditLogOut): string {
+  const type = entityLabel(row.entity_type);
+  return row.entity_label ? `${type} · ${row.entity_label}` : `${type} #${row.entity_id}`;
 }
 
 function numberField(row: AuditLogOut, key: string): number | undefined {
@@ -36,7 +44,7 @@ export function entityLink(row: AuditLogOut, role: Role | undefined): string | u
       return contractor === undefined ? undefined : `${CONTRACTORS_BASE}/${contractor}`;
     }
     case "user":
-      return role === "admin" ? "/users" : undefined; // the Users page is admin only
+      return canViewUsers(role) ? "/users" : undefined;
     default:
       return undefined;
   }

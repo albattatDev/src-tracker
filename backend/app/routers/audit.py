@@ -1,13 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import require_role
 from app.models import User, UserRole
-from app.schemas.audit import AuditListParams, AuditLogPage, AuditUser
-from app.services.audit_log import list_audit_log, list_audit_users
+from app.schemas.audit import AuditListParams, AuditLogOut, AuditLogPage, AuditUser
+from app.services.audit_log import get_audit_entry, list_audit_log, list_audit_users
 
 router = APIRouter(prefix="/audit-log", tags=["audit"])
 
@@ -31,3 +31,16 @@ def list_actors(
     db: Session = Depends(get_db),
 ) -> list[AuditUser]:
     return list_audit_users(db)
+
+
+# Declared after /users so that "users" is never read as an id.
+@router.get("/{entry_id}", response_model=AuditLogOut)
+def get_entry(
+    entry_id: int,
+    user: User = Depends(require_role(*VIEWERS)),
+    db: Session = Depends(get_db),
+) -> AuditLogOut:
+    entry = get_audit_entry(db, entry_id)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Audit entry not found")
+    return entry

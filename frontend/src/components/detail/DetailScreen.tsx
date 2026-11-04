@@ -5,17 +5,15 @@ import { buttonClass } from "../buttonStyles";
 import { TopBarOverride } from "../shell/TopBarContext";
 
 // Mobile detail: a full screen. It replaces the app's top bar with a back arrow (to the list,
-// keeping its filters), the title and the header actions.
+// keeping its filters), and the title.
 export default function DetailScreen({
   title,
   listPath,
-  actions,
   footer,
   children,
 }: {
   title: ReactNode;
   listPath: string;
-  actions?: ReactNode;
   footer?: ReactNode;
   children: ReactNode;
 }) {
@@ -26,7 +24,6 @@ export default function DetailScreen({
           <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
         </Link>
         <span className="min-w-0 truncate text-base font-semibold">{title}</span>
-        {actions && <div className="ml-auto flex shrink-0 items-center gap-1">{actions}</div>}
       </TopBarOverride>
 
       {/* The screen is as tall as the space under the top bar (-m-4 cancels AppLayout's p-4):
