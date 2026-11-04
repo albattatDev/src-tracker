@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import ColumnElement, Row, Select, asc, desc, func, select
+from sqlalchemy import ColumnElement, Row, Select, and_, asc, desc, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, aliased
 
@@ -15,7 +15,7 @@ from app.schemas.invoice import (
     InvoiceSortField,
 )
 from app.schemas.service_request import SortOrder
-from app.services.aging import AGING_STATUS, band_date_bounds, compute_aging
+from app.services.aging import AGING_STATUS, AgingBand, band_date_bounds, compute_aging
 from app.services.audit import AuditAction, AuditEntity, audited_write, log_action, row_values
 from app.services.dates import riyadh_today
 from app.services.service_requests import lock_visible_request
@@ -48,6 +48,18 @@ DECISION_ACTIONS = {
 # Aging runs on this date: the due date, or the submission date when there is none.
 REFERENCE_DATE = func.coalesce(Invoice.due_date, Invoice.submission_date)
 
+
+def band_conditions(today: date, band: AgingBand) -> ColumnElement[bool]:
+    """SQL condition: the invoice's reference date falls in `band`. The edges come from
+    aging.band_date_bounds, so the list filter and the dashboard counts share one rule."""
+    earliest, latest = band_date_bounds(today, band)
+    conditions = []
+    if earliest is not None:
+        conditions.append(REFERENCE_DATE >= earliest)
+    if latest is not None:
+        conditions.append(REFERENCE_DATE <= latest)
+    return and_(*conditions)
+
 SORT_COLUMNS = {
     InvoiceSortField.CREATED_AT: Invoice.created_at,
     InvoiceSortField.AMOUNT: Invoice.amount,
@@ -56,7 +68,16 @@ SORT_COLUMNS = {
 }
 
 
-def _visibility_conditions(user: User) -> list[ColumnElement[bool]]:
+# The roles that may see invoices at all; operations never does. The router and the dashboard
+# both use this, so the rule cannot drift between them.
+INVOICE_VIEWER_ROLES = (UserRole.ENGINEER, UserRole.MANAGER, UserRole.ADMIN)
+
+
+def can_view_invoices(user: User) -> bool:
+    return user.role in INVOICE_VIEWER_ROLES
+
+
+def visibility_conditions(user: User) -> list[ColumnElement[bool]]:
     """Engineers see the invoices of requests assigned to them, managers and admins see
     all. A role not listed here raises instead of seeing all (operations never gets here:
     the router refuses it first)."""
@@ -73,7 +94,7 @@ def _filter_conditions(
     user: User, params: InvoiceListParams, today: date
 ) -> list[ColumnElement[bool]]:
     """Filters are added to the visibility rule, so they can only narrow what a user sees."""
-    conditions = _visibility_conditions(user)
+    conditions = visibility_conditions(user)
 
     if params.approval_status is not None:
         conditions.append(Invoice.approval_status == params.approval_status)
@@ -84,11 +105,7 @@ def _filter_conditions(
     if params.aging_band is not None:
         # Only invoices that age can be in a band (see aging.ages).
         conditions.append(Invoice.approval_status == AGING_STATUS)
-        earliest, latest = band_date_bounds(today, params.aging_band)
-        if earliest is not None:
-            conditions.append(REFERENCE_DATE >= earliest)
-        if latest is not None:
-            conditions.append(REFERENCE_DATE <= latest)
+        conditions.append(band_conditions(today, params.aging_band))
 
     return conditions
 
@@ -138,7 +155,7 @@ def _read_required(db: Session, *conditions: ColumnElement[bool]) -> InvoiceOut:
 
 def get_invoice(db: Session, user: User, invoice_id: int) -> InvoiceOut:
     """One invoice, if this user may see it. Missing and hidden raise the same error."""
-    return _read_required(db, Invoice.id == invoice_id, *_visibility_conditions(user))
+    return _read_required(db, Invoice.id == invoice_id, *visibility_conditions(user))
 
 
 def create_invoice(db: Session, user: User, data: InvoiceCreate) -> InvoiceOut:

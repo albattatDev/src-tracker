@@ -45,7 +45,7 @@ class InvalidEngineer(BadRequest):
     """The chosen user cannot be assigned. The message is safe to show the client."""
 
 
-def _visibility_conditions(user: User) -> list[ColumnElement[bool]]:
+def visibility_conditions(user: User) -> list[ColumnElement[bool]]:
     """Operations see the requests they made, engineers see the requests assigned to them,
     managers and admins see all. A role not listed here raises instead of seeing all.
     """
@@ -92,7 +92,7 @@ def _date_conditions(params: SRListParams) -> list[ColumnElement[bool]]:
 
 def _filter_conditions(user: User, params: SRListParams) -> list[ColumnElement[bool]]:
     """Filters are added to the visibility rule, so they can only narrow what a user sees."""
-    conditions = _visibility_conditions(user)
+    conditions = visibility_conditions(user)
     conditions += _date_conditions(params)
 
     if params.status is not None:
@@ -143,7 +143,7 @@ def lock_visible_request(db: Session, user: User, request_id: int) -> ServiceReq
     Missing and hidden requests raise the same error as in get_request."""
     request = db.scalars(
         select(ServiceRequest)
-        .where(ServiceRequest.id == request_id, *_visibility_conditions(user))
+        .where(ServiceRequest.id == request_id, *visibility_conditions(user))
         .with_for_update()
         .execution_options(populate_existing=True)
     ).one_or_none()
@@ -174,7 +174,7 @@ def _log_change(
 def get_request(db: Session, user: User, request_id: int) -> SRRead:
     """One request, if this user may see it. A missing request and one outside the user's
     visibility raise the same error, so the API never reveals which ids exist."""
-    return _read_required(db, ServiceRequest.id == request_id, *_visibility_conditions(user))
+    return _read_required(db, ServiceRequest.id == request_id, *visibility_conditions(user))
 
 
 def create_request(db: Session, user: User, data: SRCreate) -> SRRead:

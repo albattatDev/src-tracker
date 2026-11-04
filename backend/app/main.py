@@ -5,7 +5,16 @@ from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.core.deps import get_optional_user
 from app.core.errors import BadRequest
-from app.routers import auth, contractors, documents, health, invoices, service_requests, users
+from app.routers import (
+    auth,
+    contractors,
+    dashboard,
+    documents,
+    health,
+    invoices,
+    service_requests,
+    users,
+)
 from app.services.contractor_documents import ContractorInactive
 from app.services.contractor_lookup import ContractorNotFound
 from app.services.document_storage import (
@@ -40,6 +49,7 @@ app.include_router(invoices.router)
 app.include_router(users.router)
 app.include_router(contractors.router)
 app.include_router(documents.router)
+app.include_router(dashboard.router)
 
 
 # One place that turns service errors into clean 4xx answers. The 404 text is the same for

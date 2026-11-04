@@ -5,6 +5,7 @@ import { RequireAuth, RequireRole } from "./components/RouteGuards";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import ContractorDetailPage from "./pages/ContractorDetailPage";
 import ContractorsPage from "./pages/ContractorsPage";
+import DashboardPage from "./pages/DashboardPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import LoginPage from "./pages/LoginPage";
 import ServiceRequestCreatePage from "./pages/ServiceRequestCreatePage";
@@ -14,6 +15,7 @@ import { NAV_ITEMS } from "./navigation";
 
 // Pages that are built. Any nav item not listed here still shows "Coming soon".
 const PAGES: Record<string, ReactElement> = {
+  "/dashboard": <DashboardPage />,
   "/service-requests": <ServiceRequestsPage />,
   "/invoices": <InvoicesPage />,
   "/contractors": <ContractorsPage />,

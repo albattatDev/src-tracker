@@ -4,11 +4,10 @@ soon and hands it to the worker (send_notification). Never sends mail itself."""
 from dataclasses import asdict
 from datetime import date
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
-from app.models import Contractor, NotificationEntityType
+from app.models import NotificationEntityType
 from app.services import notifications
 from app.services.compliance import EXPIRY_WARNING_DAYS, DocumentStatus, document_status
 from app.services.contractor_documents import current_documents
@@ -23,10 +22,7 @@ def scan_documents(db: Session, today: date | None = None) -> notifications.Scan
     today = today or riyadh_today()
     result = notifications.ScanResult()
 
-    inactive_ids = set(db.scalars(select(Contractor.id).where(Contractor.is_active.is_(False))))
-    for document in current_documents(db):
-        if document.contractor_id in inactive_ids:
-            continue
+    for document in current_documents(db, active_only=True):
         if document_status(document.expiry_date, today) != DocumentStatus.EXPIRING_SOON:
             continue
         notifications.claim_and_enqueue(

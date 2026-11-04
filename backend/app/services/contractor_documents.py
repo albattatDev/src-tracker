@@ -12,7 +12,7 @@ from pathlib import Path
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import ContractorDocument, DocType, User
+from app.models import Contractor, ContractorDocument, DocType, User
 from app.schemas.contractor import CurrentDocumentOut, DocumentOut
 from app.services.audit import AuditAction, AuditEntity, audited_write, log_action, row_values
 from app.services.compliance import days_left, document_status
@@ -36,10 +36,11 @@ class ContractorInactive(Exception):
 
 
 def current_documents(
-    db: Session, contractor_ids: Sequence[int] | None = None
+    db: Session, contractor_ids: Sequence[int] | None = None, *, active_only: bool = False
 ) -> list[ContractorDocument]:
     """The current document of every (contractor, doc_type) pair, for the given contractors
-    or for all of them when `contractor_ids` is None."""
+    or for all of them when `contractor_ids` is None. `active_only` drops the documents of
+    inactive contractors (the daily expiry job and the dashboard count only active ones)."""
     ranked = select(
         ContractorDocument.id,
         func.row_number()
@@ -59,6 +60,10 @@ def current_documents(
         .where(ranked_rows.c.rank == 1)
         .order_by(ContractorDocument.contractor_id, ContractorDocument.doc_type)
     )
+    if active_only:
+        query = query.join(Contractor, Contractor.id == ContractorDocument.contractor_id).where(
+            Contractor.is_active.is_(True)
+        )
     return list(db.scalars(query))
 
 
