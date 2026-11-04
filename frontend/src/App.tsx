@@ -1,13 +1,13 @@
 import type { ReactElement } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
+import ContractorDetailRoute from "./components/contractors/ContractorDetailRoute";
 import InvoiceDetailRoute from "./components/invoices/InvoiceDetailRoute";
 import NewRequestRoute from "./components/serviceRequests/NewRequestRoute";
 import ServiceRequestDetailRoute from "./components/serviceRequests/ServiceRequestDetailRoute";
 import { RequireAuth, RequireRole } from "./components/RouteGuards";
 import AuditLogPage from "./pages/AuditLogPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
-import ContractorDetailPage from "./pages/ContractorDetailPage";
 import ContractorsPage from "./pages/ContractorsPage";
 import DashboardPage from "./pages/DashboardPage";
 import InvoicesPage from "./pages/InvoicesPage";
@@ -15,15 +15,15 @@ import LoginPage from "./pages/LoginPage";
 import ServiceRequestsPage from "./pages/ServiceRequestsPage";
 import UsersPage from "./pages/UsersPage";
 import { NAV_ITEMS } from "./navigation";
-import { INVOICES_BASE, SR_BASE } from "./routes";
-import { CREATE_REQUEST_ROLES, VIEW_CONTRACTORS_ROLES } from "./utils/permissions";
+import { CONTRACTORS_BASE, INVOICES_BASE, SR_BASE } from "./routes";
+import { CREATE_REQUEST_ROLES } from "./utils/permissions";
 
 // Pages that are built. Any nav item not listed here still shows "Coming soon".
 const PAGES: Record<string, ReactElement> = {
   "/dashboard": <DashboardPage />,
   [SR_BASE]: <ServiceRequestsPage />,
   [INVOICES_BASE]: <InvoicesPage />,
-  "/contractors": <ContractorsPage />,
+  [CONTRACTORS_BASE]: <ContractorsPage />,
   "/audit-log": <AuditLogPage />,
   "/users": <UsersPage />,
 };
@@ -41,6 +41,7 @@ const PAGE_CHILDREN: Record<string, ReactElement> = {
     </>
   ),
   [INVOICES_BASE]: <Route path=":id" element={<InvoiceDetailRoute />} />,
+  [CONTRACTORS_BASE]: <Route path=":id" element={<ContractorDetailRoute />} />,
 };
 
 export default function App() {
@@ -59,9 +60,6 @@ export default function App() {
               </Route>
             </Route>
           ))}
-          <Route element={<RequireRole roles={VIEW_CONTRACTORS_ROLES} />}>
-            <Route path="/contractors/:id" element={<ContractorDetailPage />} />
-          </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Route>

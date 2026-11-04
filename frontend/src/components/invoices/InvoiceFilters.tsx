@@ -3,7 +3,7 @@ import { buttonClass } from "../buttonStyles";
 import { LABEL } from "../formStyles";
 import AgingBandNote from "./AgingBandNote";
 import InvoiceFilterFields from "./InvoiceFilterFields";
-import InvoiceSearchField from "./InvoiceSearchField";
+import SearchField from "../SearchField";
 
 // Desktop filters: one white card, controls in a wrapping row.
 export default function InvoiceFilters({
@@ -28,10 +28,11 @@ export default function InvoiceFilters({
 
       <label className={`flex flex-col gap-1.5 ${LABEL.md}`}>
         Invoice number
-        <InvoiceSearchField
+        <SearchField
           text={search.text}
           onTextChange={search.setText}
           size="md"
+          maxLength={50}
           placeholder="Search…"
           className="w-56"
         />

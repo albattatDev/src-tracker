@@ -25,3 +25,13 @@ export function formatDate(isoDate: string): string {
 export function riyadhToday(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh" }).format(new Date());
 }
+
+const riyadhDateFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Riyadh",
+  dateStyle: "medium",
+});
+
+// An instant (UTC, as the API sends timestamps) shown as its Riyadh calendar date, no time.
+export function formatRiyadhDate(isoUtc: string): string {
+  return riyadhDateFormat.format(new Date(isoUtc));
+}

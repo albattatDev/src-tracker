@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import type { AdminUser } from "../api/users";
 import { useRowNavigation } from "../hooks/useRowNavigation";
 import { PersonName } from "./Avatar";
-import ContractorStatusBadge from "./ContractorStatusBadge";
-import { RoleBadge } from "./Badges";
+import { ActiveBadge, RoleBadge } from "./Badges";
 
 // The whole row opens the edit form (?edit=<id>); the name is a real link for keyboards.
 export default function UserTable({ items }: { items: AdminUser[] }) {
@@ -36,7 +35,7 @@ export default function UserTable({ items }: { items: AdminUser[] }) {
                 {user.manager_name ?? <span className="text-gray-400">—</span>}
               </td>
               <td className="px-3 py-2">
-                <ContractorStatusBadge isActive={user.is_active} />
+                <ActiveBadge isActive={user.is_active} />
               </td>
             </tr>
           ))}

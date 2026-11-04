@@ -1,6 +1,6 @@
 import type { Role } from "../api/client";
 import type { AuditLogOut } from "../api/audit";
-import { SR_BASE } from "../routes";
+import { CONTRACTORS_BASE, SR_BASE } from "../routes";
 
 export const ENTITY_LABEL: Record<string, string> = {
   service_request: "Service request",
@@ -30,10 +30,10 @@ export function entityLink(row: AuditLogOut, role: Role | undefined): string | u
       return sr === undefined ? undefined : `${SR_BASE}/${sr}`;
     }
     case "contractor":
-      return `/contractors/${row.entity_id}`;
+      return `${CONTRACTORS_BASE}/${row.entity_id}`;
     case "contractor_document": {
       const contractor = numberField(row, "contractor_id");
-      return contractor === undefined ? undefined : `/contractors/${contractor}`;
+      return contractor === undefined ? undefined : `${CONTRACTORS_BASE}/${contractor}`;
     }
     case "user":
       return role === "admin" ? "/users" : undefined; // the Users page is admin only

@@ -1,7 +1,8 @@
-import { FileText, Image, X } from "lucide-react";
+import { FileText, Image } from "lucide-react";
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { formatFileSize } from "../utils/fileSize";
 import { buttonClass } from "./buttonStyles";
+import { LABEL, type ControlSize } from "./formStyles";
 
 // What the file card says. The caller works it out (it knows about the upload and the checks);
 // this component only draws it.
@@ -11,7 +12,7 @@ export type DropzoneStatus =
   | { kind: "completed" }
   | { kind: "failed"; message: string };
 
-const HIGHLIGHT = "border-gray-900 bg-gray-100";
+const HIGHLIGHT = "border-ink bg-fill";
 
 // A single-file picker: an empty drop box, which becomes a card for the chosen file. The file
 // can come from a drop or from the OS dialog (Browse files / Replace). It never uploads on its
@@ -19,6 +20,7 @@ const HIGHLIGHT = "border-gray-900 bg-gray-100";
 export default function FileDropzone({
   id,
   accept,
+  size,
   file,
   status,
   onFile,
@@ -26,6 +28,7 @@ export default function FileDropzone({
 }: {
   id: string; // ties the "File" label to the hidden input
   accept: string; // for the OS dialog, e.g. ".pdf,.jpg,.jpeg,.png"
+  size: ControlSize; // label and button size: touch (44px buttons) on mobile
   file: File | null;
   status: DropzoneStatus;
   onFile: (file: File) => void;
@@ -77,7 +80,7 @@ export default function FileDropzone({
 
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-xs font-medium text-gray-600">
+      <label htmlFor={id} className={`mb-1.5 block ${LABEL[size]}`}>
         File
       </label>
       {/* Hidden, not removed: the buttons below open it. tabIndex -1 because "Browse files" /
@@ -96,20 +99,21 @@ export default function FileDropzone({
       {file === null ? (
         <div
           {...dragHandlers}
-          className={`flex flex-col items-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-center ${
-            dragging ? HIGHLIGHT : "border-gray-300 bg-white"
+          className={`flex flex-col items-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 text-center ${
+            dragging ? HIGHLIGHT : "border-line-strong bg-surface"
           }`}
         >
-          <FileText className="size-8 text-gray-400" />
-          <p className="text-sm font-medium text-gray-900">Drag and drop a file here</p>
-          <p className="text-xs text-gray-500">PDF, JPG, PNG up to 10 MB</p>
-          <button type="button" onClick={openPicker} className={buttonClass("secondary", "sm")}>
+          <FileText className="size-8 text-muted" />
+          <p className="text-sm font-medium text-ink">Drag and drop a file here</p>
+          <p className="text-xs text-muted">PDF, JPG, PNG up to 10 MB</p>
+          <button type="button" onClick={openPicker} className={buttonClass("secondary", size)}>
             Browse files
           </button>
         </div>
       ) : (
         <FileCard
           file={file}
+          size={size}
           status={status}
           dragging={dragging}
           dragHandlers={dragHandlers}
@@ -123,6 +127,7 @@ export default function FileDropzone({
 
 function FileCard({
   file,
+  size,
   status,
   dragging,
   dragHandlers,
@@ -130,6 +135,7 @@ function FileCard({
   onCancelUpload,
 }: {
   file: File;
+  size: ControlSize;
   status: DropzoneStatus;
   dragging: boolean;
   dragHandlers: Record<string, (event: DragEvent) => void>;
@@ -142,17 +148,17 @@ function FileCard({
     ? HIGHLIGHT
     : status.kind === "failed"
       ? "border-red-200 bg-red-50"
-      : "border-gray-200 bg-white";
+      : "border-line bg-surface";
 
   return (
-    <div {...dragHandlers} className={`flex items-start gap-3 rounded-lg border p-3 ${border}`}>
-      <Icon className="size-8 shrink-0 text-gray-500" />
+    <div {...dragHandlers} className={`flex items-start gap-3 rounded-xl border p-3 ${border}`}>
+      <Icon className="size-8 shrink-0 text-muted" />
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-gray-900" title={file.name}>
+        <p className="truncate text-sm font-medium text-ink" title={file.name}>
           {file.name}
         </p>
-        <p className="text-xs text-gray-600" aria-live="polite">
+        <p className="text-xs text-ink-soft" aria-live="polite">
           {formatFileSize(file.size)} ·{" "}
           {status.kind === "ready" && "Ready to upload"}
           {status.kind === "uploading" && "Uploading…"}
@@ -172,17 +178,17 @@ function FileCard({
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={status.progress}
-              className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200"
+              className="h-2 flex-1 overflow-hidden rounded-full bg-line"
             >
-              <div className="h-full bg-gray-900 transition-[width]" style={{ width: `${status.progress}%` }} />
+              <div className="h-full bg-ink transition-[width]" style={{ width: `${status.progress}%` }} />
             </div>
-            <span className="w-9 text-right text-xs tabular-nums text-gray-700">{status.progress}%</span>
+            <span className="w-9 text-right text-xs tabular-nums text-ink-soft">{status.progress}%</span>
           </div>
         )}
       </div>
 
       {(status.kind === "ready" || status.kind === "failed") && (
-        <button type="button" onClick={onReplace} className={buttonClass("secondary", "sm")}>
+        <button type="button" onClick={onReplace} className={buttonClass("secondary", size)}>
           Replace
         </button>
       )}
@@ -191,9 +197,9 @@ function FileCard({
           type="button"
           onClick={onCancelUpload}
           aria-label="Cancel upload"
-          className={buttonClass("secondary", "sm")}
+          className={buttonClass("secondary", size)}
         >
-          <X className="size-4" />
+          Cancel
         </button>
       )}
     </div>

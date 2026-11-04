@@ -2,3 +2,4 @@
 // live: App.tsx, navigation.ts, the hooks, the pages and the cross-links all use these.
 export const SR_BASE = "/service-requests";
 export const INVOICES_BASE = "/invoices";
+export const CONTRACTORS_BASE = "/contractors";
