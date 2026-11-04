@@ -97,35 +97,43 @@ export const DOCUMENT_STATUS_DISPLAY: Record<DocumentBadgeStatus, Display> = {
   missing: { label: "Missing", className: "bg-gray-100 text-gray-700" },
 };
 
-function plural(count: number, word: string): string {
-  return `${count} ${word}${count === 1 ? "" : "s"}`;
+// Display only: it never changes anything, so admins see it too. The words next to it
+// ("12 days left") are utils/documents.ts's documentDaysNote.
+export function DocumentStatusBadge({ status }: { status: DocumentBadgeStatus }) {
+  const { label, className } = DOCUMENT_STATUS_DISPLAY[status];
+  return <span className={`${BASE} ${className}`}>{label}</span>;
 }
 
-// The words next to the status. Day 0 reads "Expires today" (the status stays expiring_soon:
-// the document is still usable that day); other days count how long is left or has passed.
-export function documentStatusText(status: DocumentBadgeStatus, daysLeft?: number): string {
-  const { label } = DOCUMENT_STATUS_DISPLAY[status];
-  if (daysLeft === undefined) return label;
-  if (status === "expiring_soon") {
-    return daysLeft === 0 ? "Expires today" : `${label} · ${plural(daysLeft, "day")} left`;
-  }
-  if (status === "expired") return `${label} · ${plural(-daysLeft, "day")} ago`;
-  return label;
-}
+// "2 expired" / "1 expiring": a count of one kind of problem document, in that status's colors.
+const CHIP_WORD: Record<"expired" | "expiring_soon", string> = {
+  expired: "expired",
+  expiring_soon: "expiring",
+};
 
-// Display only: it never changes anything, so admins see it too.
-export function DocumentStatusBadge({
+export function DocumentCountChip({
   status,
-  daysLeft,
+  count,
 }: {
-  status: DocumentBadgeStatus;
-  daysLeft?: number;
+  status: "expired" | "expiring_soon";
+  count: number;
 }) {
   return (
     <span className={`${BASE} ${DOCUMENT_STATUS_DISPLAY[status].className}`}>
-      {documentStatusText(status, daysLeft)}
+      {count} {CHIP_WORD[status]}
     </span>
   );
+}
+
+// Active or inactive (a contractor or a user is deactivated instead of deleted). Word and colour
+// both carry it.
+const ACTIVE_DISPLAY: Record<"active" | "inactive", Display> = {
+  active: { label: "Active", className: "bg-green-100 text-green-800" },
+  inactive: { label: "Inactive", className: "bg-gray-200 text-gray-700" },
+};
+
+export function ActiveBadge({ isActive }: { isActive: boolean }) {
+  const { label, className } = ACTIVE_DISPLAY[isActive ? "active" : "inactive"];
+  return <span className={`${BASE} ${className}`}>{label}</span>;
 }
 
 export const ROLE_DISPLAY: Record<UserRole, Display> = {

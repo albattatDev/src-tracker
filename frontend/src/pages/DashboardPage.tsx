@@ -5,7 +5,7 @@ import { SR_STATUSES } from "../api/serviceRequests";
 import { AGING_DISPLAY, DOCUMENT_STATUS_DISPLAY, STATUS_DISPLAY } from "../components/Badges";
 import { buttonClass } from "../components/buttonStyles";
 import { useDashboard } from "../hooks/useDashboard";
-import { INVOICES_BASE, SR_BASE } from "../routes";
+import { CONTRACTORS_BASE, INVOICES_BASE, SR_BASE } from "../routes";
 
 interface CardProps {
   label: string;
@@ -118,13 +118,13 @@ function DashboardContent({ data }: { data: NonNullable<ReturnType<typeof useDas
             label={DOCUMENT_STATUS_DISPLAY.expiring_soon.label}
             count={documents.expiring_soon}
             className={DOCUMENT_STATUS_DISPLAY.expiring_soon.className}
-            to="/contractors"
+            to={CONTRACTORS_BASE}
           />
           <CountCard
             label={DOCUMENT_STATUS_DISPLAY.expired.label}
             count={documents.expired}
             className={DOCUMENT_STATUS_DISPLAY.expired.className}
-            to="/contractors"
+            to={CONTRACTORS_BASE}
           />
         </Section>
       )}

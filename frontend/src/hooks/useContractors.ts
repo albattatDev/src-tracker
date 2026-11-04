@@ -7,6 +7,7 @@ import {
   listDocuments,
   updateContractor,
   uploadDocument,
+  type Contractor,
   type ContractorInput,
   type ContractorListParams,
   type ContractorPatch,
@@ -43,19 +44,27 @@ export function useDocumentHistory(contractorId: number, docType: DocType, enabl
   });
 }
 
-function useContractorMutation<V>(mutationFn: (vars: V) => Promise<unknown>) {
+// `onDone` runs once the save worked, even if the form that started it was closed meanwhile (a
+// callback passed to mutate() would be dropped then). The toasts use it.
+function useContractorMutation<V>(
+  mutationFn: (vars: V) => Promise<Contractor>,
+  onDone?: (saved: Contractor) => void
+) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [ROOT] }),
+    onSuccess: (saved) => {
+      onDone?.(saved);
+      return queryClient.invalidateQueries({ queryKey: [ROOT] });
+    },
   });
 }
 
-export const useCreateContractor = () =>
-  useContractorMutation((data: ContractorInput) => createContractor(data));
+export const useCreateContractor = (onDone?: (saved: Contractor) => void) =>
+  useContractorMutation((data: ContractorInput) => createContractor(data), onDone);
 
-export const useUpdateContractor = (id: number) =>
-  useContractorMutation((data: ContractorPatch) => updateContractor(id, data));
+export const useUpdateContractor = (id: number, onDone?: (saved: Contractor) => void) =>
+  useContractorMutation((data: ContractorPatch) => updateContractor(id, data), onDone);
 
 // Not useContractorMutation: it refreshes on settle, not only on success. An upload that was
 // cancelled after its last byte was sent can still have reached the server, so the lists must

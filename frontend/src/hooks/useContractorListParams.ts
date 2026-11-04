@@ -1,5 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import type { ContractorListParams } from "../api/contractors";
+import { useDebouncedSearch } from "./useDebouncedSearch";
 
 export const CONTRACTOR_PAGE_SIZE = 20;
 
@@ -12,6 +13,12 @@ function positiveInt(value: string | null): number | undefined {
   if (value === null || !/^\d+$/.test(value)) return undefined;
   const number = Number(value);
   return Number.isSafeInteger(number) && number >= 1 ? number : undefined;
+}
+
+// The search box text (what is typed, committed to the URL after a pause).
+export interface ContractorSearch {
+  text: string;
+  setText: (next: string) => void;
 }
 
 export interface ContractorUrlState {
@@ -54,7 +61,12 @@ export function useContractorListParams() {
     );
   }
 
+  // The box keeps what is typed; the URL (and so the API call) follows after a short pause. It
+  // lives here so that Clear also drops text that has not been committed yet.
+  const { text, setText, reset } = useDebouncedSearch(state.q, (next) => setFilter("q", next));
+
   function clearFilters() {
+    reset();
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.delete("status");
@@ -72,6 +84,13 @@ export function useContractorListParams() {
     });
   }
 
-
-  return { state, apiParams, hasFilters, setFilter, clearFilters, setPage };
+  return {
+    state,
+    apiParams,
+    hasFilters,
+    search: { text, setText },
+    setFilter,
+    clearFilters,
+    setPage,
+  };
 }

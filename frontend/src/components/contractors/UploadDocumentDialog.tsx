@@ -1,20 +1,17 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { ApiError } from "../api/client";
+import { ApiError } from "../../api/client";
 import {
   ALLOWED_EXTENSIONS,
-  DOC_TYPES,
   DOC_TYPE_NAMES,
   MAX_UPLOAD_BYTES,
   type DocType,
-} from "../api/contractors";
-import { useUploadDocument } from "../hooks/useContractors";
-import { buttonClass } from "./buttonStyles";
-import FileDropzone, { type DropzoneStatus } from "./FileDropzone";
-import Modal from "./Modal";
-import Select from "./Select";
-
-const CONTROL =
-  "rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 disabled:opacity-50";
+} from "../../api/contractors";
+import { useUploadDocument } from "../../hooks/useContractors";
+import { buttonClass } from "../buttonStyles";
+import FileDropzone, { type DropzoneStatus } from "../FileDropzone";
+import { CONTROL, LABEL, type ControlSize } from "../formStyles";
+import Modal from "../Modal";
+import { useToast } from "../Toast";
 
 // How long "Completed" stays visible before the dialog closes.
 const COMPLETED_CLOSE_DELAY_MS = 900;
@@ -32,19 +29,23 @@ function fileProblem(file: File | null): string | null {
   return null;
 }
 
+// Upload (type has no file yet) or Replace (the current file moves to history). The document
+// type is the row the user clicked: shown, not changeable.
 export default function UploadDocumentDialog({
   contractorId,
-  docType: initialType,
+  docType,
   isReplace,
+  size,
   onClose,
 }: {
   contractorId: number;
-  docType: DocType; // preselected from the row the user clicked
+  docType: DocType;
   isReplace: boolean;
+  size: ControlSize; // control and button size; the dialog is a Modal on every screen
   onClose: () => void;
 }) {
   const fileInputId = useId();
-  const [docType, setDocType] = useState<DocType>(initialType);
+  const toast = useToast();
   const [expiry, setExpiry] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
@@ -68,7 +69,7 @@ export default function UploadDocumentDialog({
   }, [completed]);
 
   const problem = fileProblem(file);
-  // The user pressing X is not a failure: the file stays selected, ready to try again.
+  // The user pressing Cancel is not a failure: the file stays selected, ready to try again.
   const cancelled = upload.error?.name === "AbortError";
   const fieldErrors = upload.error instanceof ApiError ? upload.error.fieldErrors : {};
   // A 422 about the form fields is shown under those fields. The file itself did nothing wrong.
@@ -100,33 +101,30 @@ export default function UploadDocumentDialog({
     const abort = new AbortController();
     controller.current = abort;
     setProgress(0);
-    upload.mutate({
-      data: { doc_type: docType, expiry_date: expiry, file },
-      onProgress: setProgress,
-      signal: abort.signal,
-    });
+    upload.mutate(
+      {
+        data: { doc_type: docType, expiry_date: expiry, file },
+        onProgress: setProgress,
+        signal: abort.signal,
+      },
+      {
+        onSuccess: () =>
+          toast.show(`${DOC_TYPE_NAMES[docType]} ${isReplace ? "replaced" : "uploaded"}`),
+      }
+    );
   }
 
   return (
-    <Modal title={`${isReplace ? "Replace" : "Upload"} ${DOC_TYPE_NAMES[initialType]}`} onClose={onClose}>
-      <form onSubmit={submit} className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
-          Document type
-          <Select
-            value={docType}
-            disabled={locked}
-            onChange={(e) => setDocType(e.target.value as DocType)}
-            className={CONTROL}
-          >
-            {DOC_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type} · {DOC_TYPE_NAMES[type]}
-              </option>
-            ))}
-          </Select>
+    <Modal title={isReplace ? "Replace file" : "Upload file"} width="lg" onClose={onClose}>
+      <form onSubmit={submit} className="flex flex-col gap-4">
+        <div className={`flex flex-col gap-1.5 ${LABEL[size]}`}>
+          Document
+          <p className="text-base font-normal text-ink md:text-sm">
+            {DOC_TYPE_NAMES[docType]} <span className="text-muted">({docType})</span>
+          </p>
           {fieldErrors.doc_type && <span className="font-normal text-red-700">{fieldErrors.doc_type}</span>}
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+        </div>
+        <label className={`flex flex-col gap-1.5 ${LABEL[size]}`}>
           Expiry date
           <input
             required
@@ -134,7 +132,7 @@ export default function UploadDocumentDialog({
             value={expiry}
             disabled={locked}
             onChange={(e) => setExpiry(e.target.value)}
-            className={`pr-3 ${CONTROL}`}
+            className={`w-full disabled:cursor-not-allowed disabled:bg-fill disabled:text-muted ${CONTROL[size]}`}
           />
           {fieldErrors.expiry_date && <span className="font-normal text-red-700">{fieldErrors.expiry_date}</span>}
         </label>
@@ -142,26 +140,21 @@ export default function UploadDocumentDialog({
         <FileDropzone
           id={fileInputId}
           accept={ALLOWED_EXTENSIONS.join(",")}
+          size={size}
           file={file}
           status={status}
           onFile={chooseFile}
           onCancelUpload={() => controller.current?.abort()}
         />
 
-        {isReplace && (
-          <p className="text-xs text-gray-600">The current file stays in this document's history.</p>
-        )}
+        {isReplace && <p className="text-sm text-ink-soft">The current file stays in history.</p>}
 
-        <div className="mt-2 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className={buttonClass("secondary")}>
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} className={buttonClass("secondary", size)}>
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {uploading ? "Uploading…" : isReplace ? "Replace" : "Upload"}
+          <button type="submit" disabled={!canSubmit} className={buttonClass("primary", size)}>
+            {uploading ? "Uploading…" : isReplace ? "Replace file" : "Upload file"}
           </button>
         </div>
       </form>

@@ -3,7 +3,7 @@ import { SlidersHorizontal } from "lucide-react";
 import type { InvoiceFilterKey, InvoiceSearch, InvoiceUrlState } from "../../hooks/useInvoiceListParams";
 import { buttonClass } from "../buttonStyles";
 import InvoiceFilterSheet from "./InvoiceFilterSheet";
-import InvoiceSearchField from "./InvoiceSearchField";
+import SearchField from "../SearchField";
 
 // The mobile row under the top bar: Filters (opens the sheet) and the invoice number search.
 export default function InvoiceMobileToolbar({
@@ -35,10 +35,11 @@ export default function InvoiceMobileToolbar({
           <SlidersHorizontal size={16} strokeWidth={2} aria-hidden="true" />
           Filters
         </button>
-        <InvoiceSearchField
+        <SearchField
           text={search.text}
           onTextChange={search.setText}
           size="touch"
+          maxLength={50}
           placeholder="Invoice number"
           ariaLabel="Invoice number"
           className="min-w-0 flex-1"

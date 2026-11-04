@@ -1,12 +1,13 @@
 import { Search } from "lucide-react";
-import { CONTROL, type ControlSize } from "../formStyles";
+import { CONTROL, type ControlSize } from "./formStyles";
 
-// The invoice number box. Controlled: the owner holds the text (useDebouncedSearch), because
+// A search box. Controlled: the owner holds the text (useDebouncedSearch), because
 // the Clear button next to it has to reset that text too.
-export default function InvoiceSearchField({
+export default function SearchField({
   text,
   onTextChange,
   size,
+  maxLength,
   placeholder,
   ariaLabel,
   className = "",
@@ -14,6 +15,7 @@ export default function InvoiceSearchField({
   text: string;
   onTextChange: (next: string) => void;
   size: ControlSize;
+  maxLength: number;
   placeholder: string;
   ariaLabel?: string;
   className?: string;
@@ -29,7 +31,7 @@ export default function InvoiceSearchField({
       <input
         type="search"
         value={text}
-        maxLength={50}
+        maxLength={maxLength}
         aria-label={ariaLabel}
         onChange={(e) => onTextChange(e.target.value)}
         placeholder={placeholder}

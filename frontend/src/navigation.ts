@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { matchPath } from "react-router-dom";
 import type { Role } from "./api/client";
-import { INVOICES_BASE, SR_BASE } from "./routes";
+import { CONTRACTORS_BASE, INVOICES_BASE, SR_BASE } from "./routes";
 import { VIEW_CONTRACTORS_ROLES, VIEW_INVOICES_ROLES } from "./utils/permissions";
 
 export const APP_NAME = "SRC-T";
@@ -36,7 +36,7 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ["operations", "engineer", "manager", "admin"],
   },
   { path: INVOICES_BASE, label: "Invoices", icon: Receipt, roles: VIEW_INVOICES_ROLES },
-  { path: "/contractors", label: "Contractors", icon: Building2, roles: VIEW_CONTRACTORS_ROLES },
+  { path: CONTRACTORS_BASE, label: "Contractors", icon: Building2, roles: VIEW_CONTRACTORS_ROLES },
   { path: "/audit-log", label: "Audit Log", icon: History, roles: ["manager", "admin"] },
   { path: "/users", label: "Users", icon: Users, roles: ["admin"] },
 ];
