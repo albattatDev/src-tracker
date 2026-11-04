@@ -10,28 +10,45 @@ slices.
 
 ## Setup
 
+From a clean machine, in this order:
+
 ```bash
+# 1. Configure
 cp .env.example .env
 # edit .env: set real values for DB_PASSWORD, DB_ROOT_PASSWORD, SEED_PASSWORD, JWT_SECRET
 # generate JWT_SECRET with:  openssl rand -hex 32
 
-docker compose up --build
+# 2. Build and start everything in the background
+docker compose up -d --build
+
+# 3. Wait until the api is ready (it applies the database migrations first, then serves)
+until curl -fs http://localhost:8000/health; do sleep 2; done
+
+# 4. Load the demo data (safe to run again: it never creates duplicates)
+docker compose exec api python -m app.seed
+
+# 5. Run the invoice and document alert scans now instead of waiting for 06:00
+docker compose exec api python -m app.tasks.run_now
 ```
 
-After pulling changes that add frontend dependencies, use `docker compose up --build -V`. The
+There is no manual migration step: the `api` container runs `alembic upgrade head` before it
+starts uvicorn, and exits with the error if a migration fails (`docker compose logs api`). The
+`worker` and `beat` containers start only after the api is healthy.
+
+- App: http://localhost:5173
+- API docs: http://localhost:8000/docs
+- Mailpit (alert emails): http://localhost:8025
+- MySQL (host access): `localhost:3307`
+
+The `api` container runs in dev mode: uvicorn is started with `--reload`, so edits under
+`backend/` restart it automatically. Not for production.
+
+> **Warning:** `docker compose down -v` deletes the local database and uploaded files. Use plain
+> `docker compose down` to stop without losing data.
+
+After pulling changes that add frontend dependencies, use `docker compose up -d --build -V`. The
 frontend's `node_modules` is an anonymous volume, so without `-V` the container keeps the old
 packages.
-
-Once `db` is healthy and `api` is up:
-
-```bash
-docker compose exec api alembic upgrade head
-docker compose exec api python -m app.seed
-```
-
-- API: http://localhost:8000/docs
-- Frontend: http://localhost:5173
-- MySQL (host access): `localhost:3307`
 
 ## Tests
 
@@ -46,7 +63,7 @@ anything but `srct_test`.
 
 ## Email alerts (Celery + Mailpit)
 
-`docker compose up` also starts `redis`, `mailpit`, a Celery `worker` and `beat`. Beat runs one
+`docker compose up -d` also starts `redis`, `mailpit`, a Celery `worker` and `beat`. Beat runs one
 invoice scan and one document scan every day at 06:00 Asia/Riyadh; the worker sends the emails.
 Each alert goes out once per threshold (invoices 30/60/180, documents 30 days), tracked in
 `notification_log`. A failed send is retried 3 times, and a later scan retries it again.
@@ -57,7 +74,7 @@ Demo without waiting for 06:00:
 docker compose exec api python -m app.tasks.run_now   # claims + enqueues; the worker sends
 ```
 
-Then open Mailpit at http://localhost:8025. Running it again sends nothing new.
+(This is step 5 of Setup.) Then open Mailpit at http://localhost:8025. Running it again sends nothing new.
 
 ## Seed users
 
