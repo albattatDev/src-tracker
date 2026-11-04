@@ -41,7 +41,7 @@ export default function MobileDrawer({ onClose }: { onClose: () => void }) {
       aria-label="Menu"
       className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-sidebar max-w-none flex-col overflow-hidden border-r border-line bg-surface p-0 backdrop:bg-black/40 open:flex"
     >
-      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-line px-3">
+      <div className="flex h-topbar shrink-0 items-center gap-3 border-b border-line px-3">
         <button
           type="button"
           onClick={onClose}

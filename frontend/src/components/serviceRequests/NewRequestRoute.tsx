@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
-import { useCloseToList } from "../../hooks/useCloseToList";
-import { useSrListLinks } from "../../hooks/useSrListLinks";
+import { useListLinks } from "../../hooks/useListLinks";
+import { SR_BASE } from "../../routes";
 import NewRequestDialog from "./NewRequestDialog";
 import NewRequestSheet from "./NewRequestSheet";
 
@@ -9,8 +9,7 @@ import NewRequestSheet from "./NewRequestSheet";
 // backdrop go back to the list with its filters; a created request opens its panel.
 export default function NewRequestRoute() {
   const navigate = useNavigate();
-  const { detailPath } = useSrListLinks();
-  const cancel = useCloseToList();
+  const { detailPath, close: cancel } = useListLinks(SR_BASE);
   const created = (id: number) => navigate(detailPath(id));
 
   return useBreakpoint() === "mobile" ? (

@@ -1,40 +1,31 @@
-import type { ReactNode } from "react";
 import type { SRRead } from "../../api/serviceRequests";
 import { formatRiyadh } from "../../utils/dates";
 import { PersonName } from "../Avatar";
 import { PriorityBadge } from "../Badges";
+import PropertyRow from "../PropertyRow";
+import AssignControl from "./AssignControl";
+import AssignSheetTrigger from "./AssignSheetTrigger";
 import LinkedInvoices from "./LinkedInvoices";
+import StatusControl from "./StatusControl";
+import StatusSheetTrigger from "./StatusSheetTrigger";
 
-function PropertyRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex min-h-11 items-center gap-3 border-b border-line last:border-b-0">
-      <dt className="w-[88px] shrink-0 text-sm text-muted">{label}</dt>
-      <dd className="min-w-0 flex-1 text-sm">{children}</dd>
-    </div>
-  );
-}
-
-// Everything the panel and the mobile screen show about a request. The two interactive rows
-// come in as nodes (popover controls on desktop, sheet triggers on mobile); the rest is shared.
-export default function SrDetailBody({
-  sr,
-  status,
-  engineer,
-}: {
-  sr: SRRead;
-  status: ReactNode;
-  engineer: ReactNode;
-}) {
+// Everything the panel, the slide-over and the mobile screen show about a request. Only the two
+// interactive rows differ: popover controls on desktop and tablet, sheet triggers on mobile.
+export default function SrDetailBody({ sr, mobile }: { sr: SRRead; mobile: boolean }) {
   return (
     <>
       <h2 className="text-lg font-semibold">{sr.title}</h2>
 
       <dl className="mt-4">
-        <PropertyRow label="Status">{status}</PropertyRow>
+        <PropertyRow label="Status">
+          {mobile ? <StatusSheetTrigger sr={sr} /> : <StatusControl sr={sr} />}
+        </PropertyRow>
         <PropertyRow label="Priority">
           <PriorityBadge priority={sr.priority} />
         </PropertyRow>
-        <PropertyRow label="Engineer">{engineer}</PropertyRow>
+        <PropertyRow label="Engineer">
+          {mobile ? <AssignSheetTrigger sr={sr} /> : <AssignControl sr={sr} />}
+        </PropertyRow>
         <PropertyRow label="Requester">
           <PersonName name={sr.requester_name} />
         </PropertyRow>

@@ -67,3 +67,16 @@ docs/          erd.png, schema.sql
   - Permissions only through utils/permissions.ts.
   - Every pill/badge: whitespace-nowrap shrink-0.
   - Touch targets 44px on mobile; chevron lives inside the trigger.
+
+## Adding a detail view
+
+Every master-detail area (Service Requests, Invoices, later Contractors and Audit Log) uses the same pieces; do not write a panel, slide-over and mobile screen per entity.
+
+- The route element is one wrapper (e.g. `InvoiceDetailRoute`). It gets the record, builds a `DetailStatus` (`fromQuery(useX(id))` for a record with its own endpoint; for one that comes from an already-loaded list, build the status from that list, with "id not in the list" as `not-found`), and renders `<DetailShell>` with the breadcrumb (`DetailBreadcrumb`), `mobileTitle`, the body inside `<DetailState>`, and optionally `actions` (header buttons such as Edit) and `footer` (pinned bar).
+- `DetailShell` never fetches and knows nothing about the record. It picks the panel (desktop), slide-over (tablet) or full screen (mobile) itself.
+- Links and closing: `useListLinks(basePath)` gives `listPath`, `detailPath(id)`, `subPath("new")` and `close`, all keeping the list's query string. `useDetailRoute(basePath)` gives `{ detailOpen, detailId }` for the list page.
+- The list page uses `MasterDetail` (list column plus `<Outlet />`), `ListContent` (loading / error / empty) and `useClampPage` (`?page=` past the end).
+- Compute `onClose` and other hook values in a variable before the JSX; never call a hook inside a JSX prop.
+- Use the `--spacing-topbar` token (`h-topbar`, `top-topbar`), never `h-14` / `3.5rem`, for anything the size of the top bar.
+- Phase 5 (Contractors) must DELETE the old `pages/ContractorDetailPage.tsx` and its `/contractors/:id` route in `App.tsx`, and use `DetailShell` (route `:id` under the list, like Invoices) instead of wrapping or keeping the page.
+- Base paths of list areas live in `routes.ts` (`SR_BASE`, `INVOICES_BASE`); add a constant there for a new area instead of writing the path as a string.

@@ -24,7 +24,7 @@ export default function DesktopSidebar({
         expanded ? "w-sidebar" : "w-rail"
       } ${overlay ? "shadow-popover" : ""}`}
     >
-      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-line px-3">
+      <div className="flex h-topbar shrink-0 items-center gap-3 border-b border-line px-3">
         <button
           type="button"
           onClick={onTogglePin}

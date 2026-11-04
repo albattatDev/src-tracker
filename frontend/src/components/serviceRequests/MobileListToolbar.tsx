@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useSrListLinks } from "../../hooks/useSrListLinks";
+import { useListLinks } from "../../hooks/useListLinks";
+import { SR_BASE } from "../../routes";
 import type { FilterKey, ListParams } from "../../hooks/useServiceRequestListParams";
 import { buttonClass } from "../buttonStyles";
 import FilterSheet from "./FilterSheet";
@@ -25,7 +26,7 @@ export default function MobileListToolbar({
   onClear: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const { newPath } = useSrListLinks();
+  const newPath = useListLinks(SR_BASE).subPath("new");
 
   return (
     <>

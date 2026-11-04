@@ -100,20 +100,6 @@ export function useServiceRequestListParams() {
     });
   }
 
-  // Used when the URL asks for a page past the end. It replaces the history entry,
-  // so Back does not return to the invalid page.
-  function clampPage(lastPage: number) {
-    if (params.page <= lastPage) return;
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (lastPage === 1) next.delete("page");
-        else next.set("page", String(lastPage));
-        return next;
-      },
-      { replace: true }
-    );
-  }
 
-  return { params, hasFilters, setFilter, clearFilters, toggleSort, setPage, clampPage };
+  return { params, hasFilters, setFilter, clearFilters, toggleSort, setPage };
 }

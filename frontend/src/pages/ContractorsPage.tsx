@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ContractorFilters from "../components/ContractorFilters";
 import ContractorFormDialog from "../components/ContractorFormDialog";
 import ContractorTable from "../components/ContractorTable";
 import Pagination from "../components/Pagination";
 import { useAuth } from "../hooks/useAuth";
+import { useClampPage } from "../hooks/useClampPage";
 import { canWriteContractors } from "../utils/permissions";
 import { useContractorListParams } from "../hooks/useContractorListParams";
 import { useContractors } from "../hooks/useContractors";
@@ -16,14 +17,7 @@ export default function ContractorsPage() {
   const [creating, setCreating] = useState(false);
 
   const data = query.data;
-  const pageCount = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : undefined;
-  const pastTheEnd = pageCount !== undefined && list.state.page > pageCount;
-
-  // A URL such as ?page=9 on a one-page list jumps to the last real page.
-  useEffect(() => {
-    if (pageCount !== undefined && !query.isPlaceholderData) list.clampPage(pageCount);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageCount, list.state.page, query.isPlaceholderData]);
+  const { pageCount, pastTheEnd } = useClampPage(list.state.page, data, query.isPlaceholderData);
 
   return (
     <div>
@@ -67,7 +61,7 @@ export default function ContractorsPage() {
           <ContractorTable items={query.data.items} dimmed={query.isPlaceholderData} />
           <Pagination
             page={query.data.page}
-            pageCount={pageCount ?? 1}
+            pageCount={pageCount}
             onPageChange={list.setPage}
           />
         </>

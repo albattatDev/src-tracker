@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { InvoiceOut } from "../../api/invoices";
-import { useInvoiceListLinks } from "../../hooks/useInvoiceListLinks";
+import { useListLinks } from "../../hooks/useListLinks";
+import { INVOICES_BASE, SR_BASE } from "../../routes";
 import { formatAmountNumber } from "../../utils/money";
 import { AgingBadge, ApprovalStatusBadge } from "../Badges";
 import CrossLink from "../CrossLink";
@@ -8,7 +9,7 @@ import CrossLink from "../CrossLink";
 // Mobile list: one card per invoice. The invoice number link is stretched over the whole card;
 // the request link is `relative z-10`, so it stays clickable above it.
 export default function InvoiceCards({ items, dimmed }: { items: InvoiceOut[]; dimmed: boolean }) {
-  const { detailPath } = useInvoiceListLinks();
+  const { detailPath } = useListLinks(INVOICES_BASE);
 
   return (
     <ul className={`flex flex-col gap-3 ${dimmed ? "opacity-60" : ""}`}>
@@ -27,7 +28,7 @@ export default function InvoiceCards({ items, dimmed }: { items: InvoiceOut[]; d
             <ApprovalStatusBadge status={invoice.approval_status} />
           </div>
           <div className="relative z-10 mt-2 text-sm text-ink-soft">
-            <CrossLink to={`/service-requests/${invoice.service_request_id}`} className="min-h-11">
+            <CrossLink to={`${SR_BASE}/${invoice.service_request_id}`} className="min-h-11">
               <span className="min-w-0 truncate">
                 #{invoice.service_request_id} · {invoice.service_request_title}
               </span>

@@ -5,6 +5,7 @@ import { SR_STATUSES } from "../api/serviceRequests";
 import { AGING_DISPLAY, DOCUMENT_STATUS_DISPLAY, STATUS_DISPLAY } from "../components/Badges";
 import { buttonClass } from "../components/buttonStyles";
 import { useDashboard } from "../hooks/useDashboard";
+import { INVOICES_BASE, SR_BASE } from "../routes";
 
 interface CardProps {
   label: string;
@@ -92,7 +93,7 @@ function DashboardContent({ data }: { data: NonNullable<ReturnType<typeof useDas
             label={STATUS_DISPLAY[status].label}
             count={sr_by_status[status]}
             className={STATUS_DISPLAY[status].className}
-            to={`/service-requests?status=${status}`}
+            to={`${SR_BASE}?status=${status}`}
           />
         ))}
       </Section>
@@ -105,7 +106,7 @@ function DashboardContent({ data }: { data: NonNullable<ReturnType<typeof useDas
               label={AGING_DISPLAY[band].label}
               count={invoices_by_band[band]}
               className={AGING_DISPLAY[band].className}
-              to={`/invoices?band=${band}`}
+              to={`${INVOICES_BASE}?band=${band}`}
             />
           ))}
         </Section>

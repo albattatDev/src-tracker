@@ -15,13 +15,14 @@ import LoginPage from "./pages/LoginPage";
 import ServiceRequestsPage from "./pages/ServiceRequestsPage";
 import UsersPage from "./pages/UsersPage";
 import { NAV_ITEMS } from "./navigation";
+import { INVOICES_BASE, SR_BASE } from "./routes";
 import { CREATE_REQUEST_ROLES, VIEW_CONTRACTORS_ROLES } from "./utils/permissions";
 
 // Pages that are built. Any nav item not listed here still shows "Coming soon".
 const PAGES: Record<string, ReactElement> = {
   "/dashboard": <DashboardPage />,
-  "/service-requests": <ServiceRequestsPage />,
-  "/invoices": <InvoicesPage />,
+  [SR_BASE]: <ServiceRequestsPage />,
+  [INVOICES_BASE]: <InvoicesPage />,
   "/contractors": <ContractorsPage />,
   "/audit-log": <AuditLogPage />,
   "/users": <UsersPage />,
@@ -31,7 +32,7 @@ const PAGES: Record<string, ReactElement> = {
 // child in its <Outlet />. `new` is only for operations and managers. A static path outranks
 // :id, so "new" is never read as an id.
 const PAGE_CHILDREN: Record<string, ReactElement> = {
-  "/service-requests": (
+  [SR_BASE]: (
     <>
       <Route element={<RequireRole roles={CREATE_REQUEST_ROLES} />}>
         <Route path="new" element={<NewRequestRoute />} />
@@ -39,7 +40,7 @@ const PAGE_CHILDREN: Record<string, ReactElement> = {
       <Route path=":id" element={<ServiceRequestDetailRoute />} />
     </>
   ),
-  "/invoices": <Route path=":id" element={<InvoiceDetailRoute />} />,
+  [INVOICES_BASE]: <Route path=":id" element={<InvoiceDetailRoute />} />,
 };
 
 export default function App() {
