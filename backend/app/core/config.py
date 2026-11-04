@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     jwt_secret: str
     jwt_expire_minutes: int = 480
 
+    # Background jobs (Celery + Redis) and outgoing email (Mailpit in dev).
+    redis_url: str = "redis://redis:6379/0"
+    smtp_host: str = "mailpit"
+    smtp_port: int = 1025
+    mail_from: str = "SRC-T <no-reply@srct.local>"
+
     # Contractor documents live on disk (a Docker volume), never in the database.
     upload_dir: str = "/data/uploads"
 

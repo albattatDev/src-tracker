@@ -10,6 +10,10 @@ passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 PyJWT==2.10.1
 python-multipart==0.0.20
+celery[redis]==5.4.0
+# Pinned together: celery 5.4's redis extra installs redis-py 5.x, which newer kombu rejects.
+kombu==5.4.2
+redis==5.2.1
 
 pytest==8.3.4
 httpx==0.28.1

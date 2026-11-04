@@ -44,6 +44,21 @@ is initialized, by `docker/mysql/init/01-test-db.sql`; to get it on an existing 
 `docker compose down -v` first) and never touch real data — a safety check in `tests/conftest.py` refuses to run migrations against
 anything but `srct_test`.
 
+## Email alerts (Celery + Mailpit)
+
+`docker compose up` also starts `redis`, `mailpit`, a Celery `worker` and `beat`. Beat runs one
+invoice scan and one document scan every day at 06:00 Asia/Riyadh; the worker sends the emails.
+Each alert goes out once per threshold (invoices 30/60/180, documents 30 days), tracked in
+`notification_log`. A failed send is retried 3 times, and a later scan retries it again.
+
+Demo without waiting for 06:00:
+
+```bash
+docker compose exec api python -m app.tasks.run_now   # claims + enqueues; the worker sends
+```
+
+Then open Mailpit at http://localhost:8025. Running it again sends nothing new.
+
 ## Seed users
 
 Password for all demo users is `SEED_PASSWORD` from `.env`.

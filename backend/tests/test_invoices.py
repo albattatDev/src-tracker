@@ -1,71 +1,17 @@
-from datetime import date, timedelta
-
 import pytest
 
 from app.models import (
     ApprovalStatus,
     AuditLog,
-    Invoice,
-    Priority,
     ServiceRequest,
     SRStatus,
 )
-from tests.helpers import auth_headers
-
-TODAY = date(2026, 11, 3)
+from tests.helpers import TODAY, auth_headers
 
 
 @pytest.fixture(autouse=True)
 def fixed_today(monkeypatch):
     monkeypatch.setattr("app.services.invoices.riyadh_today", lambda: TODAY)
-
-
-@pytest.fixture
-def make_sr(db_session, users):
-    def _make(engineer_key: str | None = "engineer1", status: SRStatus = SRStatus.IN_PROGRESS):
-        sr = ServiceRequest(
-            title="Broken AC",
-            description="Room 4 is hot",
-            priority=Priority.HIGH,
-            status=status,
-            requester_id=users["operations"].id,
-            assigned_engineer_id=users[engineer_key].id if engineer_key else None,
-        )
-        db_session.add(sr)
-        db_session.commit()
-        return sr
-
-    return _make
-
-
-@pytest.fixture
-def make_invoice(db_session, users):
-    counter = iter(range(1, 1000))
-
-    def _make(
-        sr: ServiceRequest,
-        age: int | None = 10,
-        status: ApprovalStatus = ApprovalStatus.PENDING,
-        number: str | None = None,
-        due: bool = True,
-    ) -> Invoice:
-        ref = TODAY - timedelta(days=age if age is not None else 0)
-        decided = status != ApprovalStatus.PENDING
-        invoice = Invoice(
-            service_request_id=sr.id,
-            invoice_number=number or f"INV-{next(counter):04d}",
-            amount="100.00",
-            submission_date=ref - timedelta(days=1) if due else ref,
-            due_date=ref if due else None,
-            approval_status=status,
-            created_by=sr.assigned_engineer_id,
-            approved_by=users["manager"].id if decided else None,
-        )
-        db_session.add(invoice)
-        db_session.commit()
-        return invoice
-
-    return _make
 
 
 def body(sr: ServiceRequest, **overrides) -> dict:

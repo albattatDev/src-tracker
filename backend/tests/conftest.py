@@ -7,6 +7,7 @@ migrations, building the engine, tearing down).
 """
 
 import os
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -31,9 +32,20 @@ from app.core.config import settings  # noqa: E402
 from app.core.database import get_db  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import User, UserRole  # noqa: E402
+from app.models import (  # noqa: E402
+    ApprovalStatus,
+    Contractor,
+    ContractorDocument,
+    DocType,
+    Invoice,
+    Priority,
+    ServiceRequest,
+    SRStatus,
+    User,
+    UserRole,
+)
 from app.seed import seed_users  # noqa: E402
-from tests.helpers import get_user  # noqa: E402
+from tests.helpers import TODAY, get_user  # noqa: E402
 
 # Fails the whole run if `app` was already imported (and configured) before this file.
 assert_test_db(settings.database_url)
@@ -121,3 +133,91 @@ def make_user(db_session: Session):
         return user
 
     return _make_user
+
+
+@pytest.fixture
+def make_sr(db_session, users):
+    def _make(engineer_key: str | None = "engineer1", status: SRStatus = SRStatus.IN_PROGRESS):
+        sr = ServiceRequest(
+            title="Broken AC",
+            description="Room 4 is hot",
+            priority=Priority.HIGH,
+            status=status,
+            requester_id=users["operations"].id,
+            assigned_engineer_id=users[engineer_key].id if engineer_key else None,
+        )
+        db_session.add(sr)
+        db_session.commit()
+        return sr
+
+    return _make
+
+
+@pytest.fixture
+def make_invoice(db_session, users):
+    """An invoice `age` days past its due date, counted from helpers.TODAY (the test must
+    freeze the code under test to the same day). due=False leaves due_date empty."""
+    counter = iter(range(1, 1000))
+
+    def _make(
+        sr: ServiceRequest,
+        age: int | None = 10,
+        status: ApprovalStatus = ApprovalStatus.PENDING,
+        number: str | None = None,
+        due: bool = True,
+    ) -> Invoice:
+        ref = TODAY - timedelta(days=age if age is not None else 0)
+        decided = status != ApprovalStatus.PENDING
+        invoice = Invoice(
+            service_request_id=sr.id,
+            invoice_number=number or f"INV-{next(counter):04d}",
+            amount="100.00",
+            submission_date=ref - timedelta(days=1) if due else ref,
+            due_date=ref if due else None,
+            approval_status=status,
+            # An unassigned request has no engineer; the invoice still needs a creator.
+            created_by=sr.assigned_engineer_id or users["engineer1"].id,
+            approved_by=users["manager"].id if decided else None,
+        )
+        db_session.add(invoice)
+        db_session.commit()
+        return invoice
+
+    return _make
+
+
+@pytest.fixture
+def make_contractor(db_session, users):
+    def _make(name="Acme Safety", manager="manager", is_active=True, email="acme@example.com"):
+        contractor = Contractor(
+            name=name,
+            contact_email=email,
+            internal_manager_id=users[manager].id,
+            is_active=is_active,
+        )
+        db_session.add(contractor)
+        db_session.commit()
+        return contractor
+
+    return _make
+
+
+@pytest.fixture
+def make_document(db_session, users):
+    """A document expiring `days` days after helpers.TODAY (negative = already expired)."""
+
+    def _make(contractor, doc_type=DocType.HIP, days=90, uploaded_at=None, filename="a.pdf"):
+        document = ContractorDocument(
+            contractor_id=contractor.id,
+            doc_type=doc_type,
+            file_path=f"contractors/{contractor.id}/{filename}",
+            original_filename=filename,
+            expiry_date=TODAY + timedelta(days=days),
+            uploaded_by=users["manager"].id,
+            uploaded_at=uploaded_at or datetime(2026, 10, 1, 8, 0, 0),
+        )
+        db_session.add(document)
+        db_session.commit()
+        return document
+
+    return _make
