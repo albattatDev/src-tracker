@@ -6,6 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useCreateUser, useUpdateUser, useUsers } from "../hooks/useUsers";
 import ConfirmDialog from "./ConfirmDialog";
 import Modal from "./Modal";
+import Select from "./Select";
 
 const CONTROL = "rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900";
 const ROLES = Object.keys(ROLE_DISPLAY) as UserRole[];
@@ -126,13 +127,13 @@ export default function UserFormDialog({
               </label>
               <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
                 Role (cannot be changed later)
-                <select value={role} onChange={(e) => setRole(e.target.value as UserRole)} className={CONTROL}>
+                <Select value={role} onChange={(e) => setRole(e.target.value as UserRole)} className={CONTROL}>
                   {ROLES.map((r) => (
                     <option key={r} value={r}>
                       {ROLE_DISPLAY[r].label}
                     </option>
                   ))}
-                </select>
+                </Select>
                 {error("role")}
               </label>
             </>
@@ -140,14 +141,14 @@ export default function UserFormDialog({
 
           <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
             Manager
-            <select value={managerId} onChange={(e) => setManagerId(e.target.value)} className={CONTROL}>
+            <Select value={managerId} onChange={(e) => setManagerId(e.target.value)} className={CONTROL}>
               <option value="">{users.isPending ? "Loading users…" : "No manager"}</option>
               {managerOptions.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.full_name} ({m.email})
                 </option>
               ))}
-            </select>
+            </Select>
             {error("manager_id")}
           </label>
           {noManagerWarning && (

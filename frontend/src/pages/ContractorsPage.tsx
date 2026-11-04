@@ -4,12 +4,13 @@ import ContractorFormDialog from "../components/ContractorFormDialog";
 import ContractorTable from "../components/ContractorTable";
 import Pagination from "../components/Pagination";
 import { useAuth } from "../hooks/useAuth";
+import { canWriteContractors } from "../utils/permissions";
 import { useContractorListParams } from "../hooks/useContractorListParams";
 import { useContractors } from "../hooks/useContractors";
 
 export default function ContractorsPage() {
   const { user } = useAuth();
-  const canWrite = user?.role === "manager"; // admins can look but not change
+  const canWrite = canWriteContractors(user?.role);
   const list = useContractorListParams();
   const query = useContractors(list.apiParams);
   const [creating, setCreating] = useState(false);

@@ -389,3 +389,31 @@ def test_status_requires_a_token(client, users, make_request):
 
     assert client.patch(f"/service-requests/{request.id}/status", json={"status": "x"}).status_code == 401
     assert client.patch(f"/service-requests/{request.id}/assign", json={}).status_code == 401
+
+
+# --- assigned_engineer_id in every SRRead response ---
+
+
+def test_assign_response_carries_the_engineer_id(client, users, make_request):
+    request = make_request()
+
+    body = assign_as(client, users["manager"], request.id, users["engineer1"].id).json()
+
+    assert body["assigned_engineer_id"] == users["engineer1"].id
+
+
+def test_detail_and_list_carry_the_engineer_id_or_null(client, users, make_request):
+    assigned = make_request(SRStatus.ASSIGNED, users["engineer2"])
+    unassigned = make_request()
+    headers = auth_headers(users["manager"])
+
+    detail = client.get(f"/service-requests/{assigned.id}", headers=headers).json()
+    detail_open = client.get(f"/service-requests/{unassigned.id}", headers=headers).json()
+    listing = client.get("/service-requests", headers=headers).json()["items"]
+    by_id = {item["id"]: item for item in listing}
+
+    assert detail["assigned_engineer_id"] == users["engineer2"].id
+    assert detail["assigned_engineer_name"] == users["engineer2"].full_name
+    assert detail_open["assigned_engineer_id"] is None
+    assert by_id[assigned.id]["assigned_engineer_id"] == users["engineer2"].id
+    assert by_id[unassigned.id]["assigned_engineer_id"] is None

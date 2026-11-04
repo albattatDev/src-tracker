@@ -89,6 +89,7 @@ def _read_query() -> Select:
             requester.full_name.label("requester_name"),
             # NULL when the outer join finds no engineer (CONCAT is NULL if any part is).
             engineer.full_name.label("assigned_engineer_name"),
+            ServiceRequest.assigned_engineer_id,
             ServiceRequest.created_at,
             ServiceRequest.updated_at,
         )

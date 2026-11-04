@@ -11,6 +11,7 @@ import { useUploadDocument } from "../hooks/useContractors";
 import { buttonClass } from "./buttonStyles";
 import FileDropzone, { type DropzoneStatus } from "./FileDropzone";
 import Modal from "./Modal";
+import Select from "./Select";
 
 const CONTROL =
   "rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 disabled:opacity-50";
@@ -111,7 +112,7 @@ export default function UploadDocumentDialog({
       <form onSubmit={submit} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
           Document type
-          <select
+          <Select
             value={docType}
             disabled={locked}
             onChange={(e) => setDocType(e.target.value as DocType)}
@@ -122,7 +123,7 @@ export default function UploadDocumentDialog({
                 {type} · {DOC_TYPE_NAMES[type]}
               </option>
             ))}
-          </select>
+          </Select>
           {fieldErrors.doc_type && <span className="font-normal text-red-700">{fieldErrors.doc_type}</span>}
         </label>
         <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
@@ -133,7 +134,7 @@ export default function UploadDocumentDialog({
             value={expiry}
             disabled={locked}
             onChange={(e) => setExpiry(e.target.value)}
-            className={CONTROL}
+            className={`pr-3 ${CONTROL}`}
           />
           {fieldErrors.expiry_date && <span className="font-normal text-red-700">{fieldErrors.expiry_date}</span>}
         </label>

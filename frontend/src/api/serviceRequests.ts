@@ -21,6 +21,7 @@ export interface SRRead {
   status: SRStatus;
   requester_name: string;
   assigned_engineer_name: string | null;
+  assigned_engineer_id: number | null; // the id behind the name; null when unassigned
   created_at: string; // UTC, ends with Z
   updated_at: string; // UTC, ends with Z
 }

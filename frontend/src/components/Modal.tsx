@@ -1,37 +1,33 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { useModalDialog } from "../hooks/useModalDialog";
 
-// Render it only while it should be open: it opens as a modal when it mounts (same approach
-// as ConfirmDialog). The native <dialog> gives the backdrop, the focus trap and Escape.
+// Literal strings so Tailwind sees them.
+const WIDTH = { md: "max-w-md", lg: "max-w-[520px]" } as const;
+
+// Render it only while it should be open (see useModalDialog).
 export default function Modal({
   title,
+  width = "md",
   onClose,
   isBusy = false,
   children,
 }: {
   title: string;
+  width?: keyof typeof WIDTH;
   onClose: () => void;
   isBusy?: boolean; // a running request cannot be dismissed
   children: ReactNode;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (dialog && !dialog.open) dialog.showModal();
-  }, []);
+  const { ref, dialogProps } = useModalDialog(() => {
+    if (!isBusy) onClose();
+  });
 
   return (
     <dialog
       ref={ref}
+      {...dialogProps}
       aria-labelledby="modal-title"
-      onCancel={(e) => {
-        e.preventDefault();
-        if (!isBusy) onClose();
-      }}
-      onClick={(e) => {
-        if (e.target === ref.current && !isBusy) onClose();
-      }}
-      className="m-auto w-full max-w-md rounded-lg p-0 shadow-xl backdrop:bg-black/40"
+      className={`m-auto w-full rounded-lg p-0 shadow-xl backdrop:bg-black/40 ${WIDTH[width]}`}
     >
       <div className="p-5">
         <h2 id="modal-title" className="mb-4 text-base font-semibold text-gray-900">

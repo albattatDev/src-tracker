@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
 import type { Decision } from "../api/invoices";
+import { useModalDialog } from "../hooks/useModalDialog";
 
 // Solid colour plus a text label, so the meaning never depends on colour alone.
 const TONE_BUTTON: Record<Decision, string> = {
@@ -7,8 +7,7 @@ const TONE_BUTTON: Record<Decision, string> = {
   reject: "bg-red-700 text-white hover:bg-red-800",
 };
 
-// Render it only while it should be open: it opens as a modal when it mounts. The native
-// <dialog> gives the backdrop, the focus trap and Escape-to-close.
+// Render it only while it should be open (see useModalDialog).
 export default function ConfirmDialog({
   title,
   message,
@@ -28,26 +27,16 @@ export default function ConfirmDialog({
   isLoading?: boolean;
   error?: string | null;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (dialog && !dialog.open) dialog.showModal();
-  }, []);
+  // A running request cannot be dismissed.
+  const { ref, dialogProps } = useModalDialog(() => {
+    if (!isLoading) onCancel();
+  });
 
   return (
     <dialog
       ref={ref}
+      {...dialogProps}
       aria-labelledby="confirm-title"
-      // Escape: the browser would close the dialog itself, which a running request must not allow.
-      onCancel={(e) => {
-        e.preventDefault();
-        if (!isLoading) onCancel();
-      }}
-      // A click on the backdrop lands on the <dialog> element itself, not on its content.
-      onClick={(e) => {
-        if (e.target === ref.current && !isLoading) onCancel();
-      }}
       className="m-auto w-full max-w-md rounded-lg p-0 shadow-xl backdrop:bg-black/40"
     >
       <div className="p-5">

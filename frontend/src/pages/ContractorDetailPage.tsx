@@ -7,6 +7,7 @@ import ContractorDocuments from "../components/ContractorDocuments";
 import ContractorFormDialog from "../components/ContractorFormDialog";
 import ContractorStatusBadge from "../components/ContractorStatusBadge";
 import { useAuth } from "../hooks/useAuth";
+import { canWriteContractors } from "../utils/permissions";
 import { useContractor, useUpdateContractor } from "../hooks/useContractors";
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -21,7 +22,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 export default function ContractorDetailPage() {
   const id = Number(useParams().id);
   const { user } = useAuth();
-  const canWrite = user?.role === "manager"; // admins can look but not change
+  const canWrite = canWriteContractors(user?.role);
   const query = useContractor(id);
   const update = useUpdateContractor(id);
   const [editing, setEditing] = useState(false);

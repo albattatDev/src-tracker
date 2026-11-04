@@ -58,9 +58,13 @@ export function PersonName({
   size?: AvatarSize;
 }) {
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="inline-flex min-w-0 items-center gap-2">
       <Avatar name={name} size={size} />
-      {name ? <span>{name}</span> : emptyLabel && <span className="text-muted">{emptyLabel}</span>}
+      {name ? (
+        <span className="min-w-0 truncate">{name}</span>
+      ) : (
+        emptyLabel && <span className="min-w-0 truncate text-muted">{emptyLabel}</span>
+      )}
     </span>
   );
 }
