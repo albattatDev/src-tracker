@@ -16,6 +16,11 @@
   --radius-button: 8px;
   --radius-card: 12px;
 
+  /* Desktop sidebar: the collapsed rail and the expanded width. w-rail, w-sidebar, md:pl-rail
+     and md:pl-sidebar must always agree, so the rail and content widths come from here. */
+  --spacing-rail: 64px;
+  --spacing-sidebar: 248px;
+
   --shadow-popover: 0 8px 24px rgba(17, 24, 39, 0.14), 0 0 0 1px rgba(17, 24, 39, 0.08);
 }
 

@@ -14,6 +14,10 @@ export interface User {
   role: Role;
 }
 
+export function fullName(user: Pick<User, "first_name" | "last_name">): string {
+  return `${user.first_name} ${user.last_name}`;
+}
+
 export class ApiError extends Error {
   status: number;
   // Only set for 422: field name -> first validation message for that field.
