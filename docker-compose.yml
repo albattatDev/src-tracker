@@ -36,6 +36,26 @@ services:
 
   api:
     <<: *backend
+    # Only the api migrates: alembic must succeed before uvicorn starts. If it fails, `&&`
+    # stops here and the container exits non-zero (see `docker compose logs api`).
+    # Dev mode: --reload restarts uvicorn when code in ./backend changes.
+    command: >-
+      sh -c "alembic upgrade head &&
+      exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    healthcheck:
+      # /health is 200 only when the DB answers, and uvicorn only runs after migrations,
+      # so healthy means migrated. python is used because the slim image has no curl.
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
     volumes:
       - ./backend:/app
       - uploads:/data/uploads
@@ -66,7 +86,10 @@ services:
     command: celery -A app.tasks.celery_app worker -l info
     volumes:
       - ./backend:/app
+    # Start after the api is healthy, i.e. after it has migrated the database.
     depends_on:
+      api:
+        condition: service_healthy
       db:
         condition: service_healthy
       redis:
@@ -79,7 +102,10 @@ services:
     command: celery -A app.tasks.celery_app beat -l info -s /tmp/celerybeat-schedule
     volumes:
       - ./backend:/app
+    # Start after the api is healthy, i.e. after it has migrated the database.
     depends_on:
+      api:
+        condition: service_healthy
       db:
         condition: service_healthy
       redis:
