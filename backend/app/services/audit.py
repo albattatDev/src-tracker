@@ -91,3 +91,18 @@ def log_action(
     )
     db.add(entry)
     return entry
+
+
+# Keys removed on read. A superset of SECRET_COLUMNS: "password" is not a column, but an old
+# or hand-written row could carry it, and nothing sensitive may leave through this page.
+_REDACTED_KEYS = SECRET_COLUMNS | {"password"}
+
+
+def redact(value: Any) -> Any:
+    """Returns the value without any secret key, at any depth. The one place audit values
+    are cleaned on read, so a secret that reached the table still never reaches a client."""
+    if isinstance(value, dict):
+        return {k: redact(v) for k, v in value.items() if k not in _REDACTED_KEYS}
+    if isinstance(value, list):
+        return [redact(item) for item in value]
+    return value

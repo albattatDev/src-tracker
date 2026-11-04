@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.core.deps import get_optional_user
 from app.core.errors import BadRequest, FieldError
 from app.routers import (
+    audit,
     auth,
     contractors,
     dashboard,
@@ -51,6 +52,7 @@ app.include_router(users.router)
 app.include_router(contractors.router)
 app.include_router(documents.router)
 app.include_router(dashboard.router)
+app.include_router(audit.router)
 
 
 # One place that turns service errors into clean 4xx answers. The 404 text is the same for

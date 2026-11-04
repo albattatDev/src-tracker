@@ -1,4 +1,3 @@
-from datetime import timedelta
 from typing import Any
 
 from sqlalchemy import ColumnElement, Select, asc, desc, func, select
@@ -17,7 +16,7 @@ from app.schemas.service_request import (
     SRStatusUpdate,
 )
 from app.services.audit import AuditAction, AuditEntity, audited_write, log_action, row_values
-from app.services.dates import riyadh_day_start_utc
+from app.services.dates import riyadh_day_conditions
 from app.services.sr_status import (
     InvalidStatusChange,
     can_assign,
@@ -31,10 +30,6 @@ SORT_COLUMNS = {
     SRSortField.CREATED_AT: ServiceRequest.created_at,
     SRSortField.PRIORITY: ServiceRequest.priority,
 }
-
-
-class InvalidDateRange(BadRequest):
-    """created_from / created_to cannot be used. The message is safe to show the client."""
 
 
 class ServiceRequestNotFound(Exception):
@@ -60,40 +55,13 @@ def visibility_conditions(user: User) -> list[ColumnElement[bool]]:
             raise ValueError(f"No service request visibility rule for role {user.role!r}")
 
 
-def _check_date_range(params: SRListParams) -> None:
-    if (
-        params.created_from is not None
-        and params.created_to is not None
-        and params.created_from > params.created_to
-    ):
-        raise InvalidDateRange("created_from must not be after created_to")
-
-
-def _date_conditions(params: SRListParams) -> list[ColumnElement[bool]]:
-    """Turns the Riyadh created_from / created_to dates into UTC conditions on created_at."""
-    _check_date_range(params)
-
-    conditions = []
-    if params.created_from is not None:
-        try:
-            start = riyadh_day_start_utc(params.created_from)
-        except OverflowError as error:
-            raise InvalidDateRange("created_from is out of range") from error
-        conditions.append(ServiceRequest.created_at >= start)
-    if params.created_to is not None:
-        try:
-            # created_to is inclusive, so the cut-off is the start of the day after it.
-            next_day_start = riyadh_day_start_utc(params.created_to + timedelta(days=1))
-        except OverflowError as error:
-            raise InvalidDateRange("created_to is out of range") from error
-        conditions.append(ServiceRequest.created_at < next_day_start)
-    return conditions
-
-
 def _filter_conditions(user: User, params: SRListParams) -> list[ColumnElement[bool]]:
     """Filters are added to the visibility rule, so they can only narrow what a user sees."""
     conditions = visibility_conditions(user)
-    conditions += _date_conditions(params)
+    conditions += riyadh_day_conditions(
+        ServiceRequest.created_at, params.created_from, params.created_to,
+        "created_from", "created_to",
+    )
 
     if params.status is not None:
         conditions.append(ServiceRequest.status == params.status)
