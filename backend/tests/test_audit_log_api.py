@@ -1,8 +1,10 @@
+from contextlib import contextmanager
 from datetime import datetime
 
 import pytest
+from sqlalchemy import event
 
-from app.models import AuditLog
+from app.models import AuditLog, DocType
 from app.services.audit import redact
 from tests.helpers import auth_headers
 
@@ -171,3 +173,211 @@ def test_audit_users_lists_distinct_actors(client, users, make_entry):
     make_entry(datetime(2026, 11, 2), user=None)
     r = client.get("/audit-log/users", headers=auth_headers(users["admin"]))
     assert [u["id"] for u in r.json()] == [users["manager"].id]
+
+
+# ---- single entry ----
+
+def get_one(client, user, entry_id):
+    return client.get(f"/audit-log/{entry_id}", headers=auth_headers(user))
+
+
+def test_entry_no_token_is_401(client):
+    assert client.get("/audit-log/1").status_code == 401
+
+
+@pytest.mark.parametrize("role", ["engineer1", "operations"])
+def test_entry_engineer_and_operations_get_403(client, users, make_entry, role):
+    entry = make_entry(datetime(2026, 11, 1, 10))
+    assert get_one(client, users[role], entry.id).status_code == 403
+
+
+@pytest.mark.parametrize("role", ["manager", "admin"])
+def test_entry_manager_and_admin_get_200(client, users, make_entry, role):
+    entry = make_entry(datetime(2026, 11, 1, 10), user=users["manager"], new={"title": "x"})
+    response = get_one(client, users[role], entry.id)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == entry.id
+    assert body["user"]["full_name"] == users["manager"].full_name
+    assert body["new_values"] == {"title": "x"}
+    assert body["created_at"].endswith("Z")
+
+
+def test_entry_matches_list_item(client, users, make_entry):
+    entry = make_entry(datetime(2026, 11, 1, 10), user=users["manager"], old={"a": 1}, new={"a": 2})
+    listed = get(client, users["manager"]).json()["items"][0]
+    assert get_one(client, users["manager"], entry.id).json() == listed
+
+
+def test_entry_unknown_id_is_404(client, users):
+    assert get_one(client, users["manager"], 999999).status_code == 404
+
+
+def test_entry_system_row_has_null_user(client, users, make_entry):
+    entry = make_entry(datetime(2026, 11, 1, 10), user=None)
+    assert get_one(client, users["manager"], entry.id).json()["user"] is None
+
+
+def test_entry_never_returns_password_data(client, users, make_entry):
+    entry = make_entry(datetime(2026, 11, 1, 10), new={"email": "a@b.c", "password_hash": "secret"})
+    body = get_one(client, users["manager"], entry.id).json()
+    assert "password_hash" not in body["new_values"]
+    assert "secret" not in str(body)
+
+
+# ---- labels: names instead of ids ----
+
+def label_of(client, user, entry):
+    response = get_one(client, user, entry.id)
+    assert response.status_code == 200
+    return response.json()["entity_label"]
+
+
+def test_entity_labels_for_each_entity_type(client, users, make_entry, make_contractor, make_sr, make_invoice, make_document):
+    contractor = make_contractor(name="Eastline Maintenance")
+    sr = make_sr()
+    invoice = make_invoice(sr, number="INV-DEMO-045")
+    document = make_document(contractor, doc_type=DocType.CCSP)
+    when = datetime(2026, 11, 1, 10)
+    viewer = users["manager"]
+
+    assert label_of(client, viewer, make_entry(when, entity_type="contractor", entity_id=contractor.id)) == "Eastline Maintenance"
+    assert label_of(client, viewer, make_entry(when, entity_type="invoice", entity_id=invoice.id)) == "INV-DEMO-045"
+    assert label_of(client, viewer, make_entry(when, entity_type="service_request", entity_id=sr.id)) == "Broken AC"
+    assert label_of(client, viewer, make_entry(when, entity_type="user", entity_id=users["engineer1"].id)) == users["engineer1"].full_name
+    assert label_of(client, viewer, make_entry(when, entity_type="contractor_document", entity_id=document.id)) == "CCSP · Eastline Maintenance"
+
+
+def test_deleted_entity_falls_back_to_the_snapshot(client, users, make_entry):
+    when = datetime(2026, 11, 1, 10)
+    viewer = users["manager"]
+    contractor = make_entry(when, action="delete", entity_type="contractor", entity_id=9001, old={"name": "Gone Co"})
+    invoice = make_entry(when, action="delete", entity_type="invoice", entity_id=9002, old={"invoice_number": "INV-GONE"})
+    request = make_entry(when, action="delete", entity_type="service_request", entity_id=9003, old={"title": "Old leak"})
+    user = make_entry(when, action="delete", entity_type="user", entity_id=9004, old={"first_name": "Ann", "last_name": "Lee"})
+    assert label_of(client, viewer, contractor) == "Gone Co"
+    assert label_of(client, viewer, invoice) == "INV-GONE"
+    assert label_of(client, viewer, request) == "Old leak"
+    assert label_of(client, viewer, user) == "Ann Lee"
+
+
+def test_deleted_document_uses_the_snapshot_and_its_contractor(client, users, make_entry, make_contractor):
+    contractor = make_contractor(name="Eastline Maintenance")
+    entry = make_entry(
+        datetime(2026, 11, 1, 10),
+        action="delete",
+        entity_type="contractor_document",
+        entity_id=9005,
+        old={"doc_type": "JSA", "contractor_id": contractor.id},
+    )
+    assert label_of(client, users["manager"], entry) == "JSA · Eastline Maintenance"
+
+
+def test_label_is_null_when_nothing_names_the_entity(client, users, make_entry):
+    when = datetime(2026, 11, 1, 10)
+    assert label_of(client, users["manager"], make_entry(when, entity_type="contractor", entity_id=9006)) is None
+    assert label_of(client, users["manager"], make_entry(when, entity_type="mystery", entity_id=1)) is None
+
+
+def test_diff_with_ids_on_both_sides_is_labelled_on_both_sides(client, users, make_entry, make_contractor, make_sr):
+    contractor = make_contractor(name="Eastline Maintenance")
+    sr = make_sr()
+    entry = make_entry(
+        datetime(2026, 11, 1, 10),
+        entity_type="contractor",
+        entity_id=contractor.id,
+        old={"internal_manager_id": users["admin"].id, "contractor_id": contractor.id, "service_request_id": sr.id},
+        new={"internal_manager_id": users["manager"].id},
+    )
+    labels = get_one(client, users["manager"], entry.id).json()["value_labels"]
+    assert labels["internal_manager_id"] == {
+        str(users["admin"].id): users["admin"].full_name,
+        str(users["manager"].id): users["manager"].full_name,
+    }
+    assert labels["contractor_id"] == {str(contractor.id): "Eastline Maintenance"}
+    assert labels["service_request_id"] == {str(sr.id): "Broken AC"}
+
+
+def test_unknown_ids_and_non_ids_get_no_label(client, users, make_entry):
+    entry = make_entry(
+        datetime(2026, 11, 1, 10),
+        new={"uploaded_by": 999999, "created_by": True, "approved_by": "7", "title": "x"},
+    )
+    assert get_one(client, users["manager"], entry.id).json()["value_labels"] == {}
+
+
+def test_list_and_detail_return_the_same_labels(client, users, make_entry, make_contractor):
+    contractor = make_contractor(name="Eastline Maintenance")
+    entry = make_entry(
+        datetime(2026, 11, 1, 10),
+        user=users["manager"],
+        entity_type="contractor",
+        entity_id=contractor.id,
+        new={"internal_manager_id": users["manager"].id},
+    )
+    listed = get(client, users["manager"]).json()["items"][0]
+    detail = get_one(client, users["manager"], entry.id).json()
+    assert listed == detail
+    assert detail["entity_label"] == "Eastline Maintenance"
+    assert detail["value_labels"]["internal_manager_id"] == {str(users["manager"].id): users["manager"].full_name}
+
+
+@contextmanager
+def count_queries(db_session):
+    statements: list[str] = []
+
+    def before(conn, cursor, statement, parameters, context, executemany):
+        statements.append(statement)
+
+    bind = db_session.get_bind()
+    event.listen(bind, "before_cursor_execute", before)
+    try:
+        yield statements
+    finally:
+        event.remove(bind, "before_cursor_execute", before)
+
+
+def test_query_count_does_not_grow_with_page_size(client, users, db_session, make_entry, make_contractor, make_sr, make_invoice, make_document):
+    # 20 entries in groups of five types, newest first, so a page of 5 and a page of 20 both
+    # touch every entity type; the 20 resolve four times as many ids.
+    for i in range(20):
+        when = datetime(2026, 11, 1, 10, i)
+        contractor = make_contractor(name=f"Contractor {i}", email=f"c{i}@example.com")
+        sr = make_sr()
+        invoice = make_invoice(sr)
+        document = make_document(contractor)
+        kind = i % 5
+        if kind == 0:
+            make_entry(when, user=users["manager"], entity_type="contractor", entity_id=contractor.id, new={"internal_manager_id": users["manager"].id})
+        elif kind == 1:
+            make_entry(when, entity_type="service_request", entity_id=sr.id, new={"assigned_engineer_id": users["engineer1"].id})
+        elif kind == 2:
+            make_entry(when, entity_type="invoice", entity_id=invoice.id, new={"service_request_id": sr.id})
+        elif kind == 3:
+            make_entry(when, entity_type="contractor_document", entity_id=document.id, new={"uploaded_by": users["manager"].id})
+        else:
+            make_entry(when, entity_type="user", entity_id=users["engineer1"].id)
+    db_session.commit()
+
+    # The first request after the commit also opens the test session's savepoint; do one
+    # unmeasured request so both measured ones start from the same state.
+    get(client, users["manager"], page_size=5)
+
+    with count_queries(db_session) as small:
+        assert len(get(client, users["manager"], page_size=5).json()["items"]) == 5
+    with count_queries(db_session) as large:
+        assert len(get(client, users["manager"], page_size=20).json()["items"]) == 20
+    assert len(small) == len(large)
+    # The most one request may run: the caller's own user lookup, the count, the page, and one
+    # label lookup per entity type (users, contractors, requests, invoices, documents).
+    caller, count, page, label_lookups = 1, 1, 1, 5
+    selects = [q for q in small if q.lstrip().upper().startswith("SELECT")]
+    assert len(selects) <= caller + count + page + label_lookups
+
+
+def test_labels_do_not_change_access_or_redaction(client, users, make_entry):
+    entry = make_entry(datetime(2026, 11, 1, 10), new={"email": "a@b.c", "password_hash": "secret"})
+    assert get_one(client, users["engineer1"], entry.id).status_code == 403
+    body = get_one(client, users["admin"], entry.id).json()
+    assert "password_hash" not in body["new_values"]
+    assert "entity_label" in body and "value_labels" in body

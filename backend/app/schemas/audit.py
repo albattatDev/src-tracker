@@ -37,6 +37,11 @@ class AuditLogOut(BaseModel):
     entity_id: int
     old_values: dict[str, Any] | None
     new_values: dict[str, Any] | None
+    # What the entity is called ("Eastline Maintenance"), or None when nothing names it.
+    entity_label: str | None = None
+    # field -> {str(id): name} for the foreign-key fields in old_values / new_values, so a
+    # diff can show names on both sides.
+    value_labels: dict[str, dict[str, str]] = Field(default_factory=dict)
 
     @field_validator("old_values", "new_values")
     @classmethod

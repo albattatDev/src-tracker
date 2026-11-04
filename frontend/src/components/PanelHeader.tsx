@@ -2,22 +2,19 @@ import type { ReactNode } from "react";
 import { X } from "lucide-react";
 import { buttonClass } from "./buttonStyles";
 
-// The top row of SidePanel and SlideOver: a breadcrumb slot, optional actions and the close button. Sticky, so
+// The top row of SidePanel and SlideOver: a breadcrumb slot and the close button. Sticky, so
 // it stays in view while the content below scrolls.
 export default function PanelHeader({
   breadcrumb,
-  actions,
   onClose,
 }: {
   breadcrumb: ReactNode;
-  actions?: ReactNode; // buttons before the close button (Edit, activate/deactivate)
   onClose: () => void;
 }) {
   return (
     <div className="sticky top-0 z-10 flex h-topbar shrink-0 items-center justify-between gap-2 border-b border-line bg-surface px-4">
       <div className="min-w-0 truncate">{breadcrumb}</div>
       <div className="flex shrink-0 items-center gap-1">
-        {actions}
         <button
           type="button"
           onClick={onClose}

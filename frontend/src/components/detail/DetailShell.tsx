@@ -14,7 +14,7 @@ export interface ShellContext {
 // The frame of every detail view: the inline panel on desktop, the slide-over on tablet, the
 // full screen on mobile. Exactly one of them renders. It never fetches and knows nothing about
 // the record: the entity's wrapper loads it (or takes it from a list) and passes in the title,
-// the body (usually a <DetailState>), the footer and the header actions. The shell builds the
+// the body (usually a <DetailState>) and the footer. The shell builds the
 // breadcrumb and the mobile top bar from `list` and `title`, and pads the body.
 export default function DetailShell({
   "aria-label": ariaLabel,
@@ -22,8 +22,8 @@ export default function DetailShell({
   storageKey,
   list,
   title,
+  mobileTitle,
   onClose,
-  actions,
   footer,
   children,
 }: {
@@ -32,8 +32,8 @@ export default function DetailShell({
   storageKey: string; // where the desktop panel remembers its dragged width
   list: { label: string; path: string }; // the list this opened over; path keeps its filters
   title: string; // the record's name: breadcrumb end and mobile top bar
+  mobileTitle?: string; // the mobile top bar text when it should differ from `title` ("Audit #14")
   onClose?: () => void; // default: go back to list.path
-  actions?: ReactNode; // header buttons (Edit, activate/deactivate): panel header and mobile top bar
   footer?: (context: ShellContext) => ReactNode; // pinned under the body (e.g. Approve/Reject)
   children: (context: ShellContext) => ReactNode;
 }) {
@@ -56,7 +56,6 @@ export default function DetailShell({
           storageKey={storageKey}
           onClose={close}
           breadcrumb={breadcrumb}
-          actions={actions}
           footer={footerNode}
         >
           {body}
@@ -69,7 +68,6 @@ export default function DetailShell({
           width={width}
           onClose={close}
           breadcrumb={breadcrumb}
-          actions={actions}
           footer={footerNode}
         >
           {body}
@@ -77,7 +75,7 @@ export default function DetailShell({
       );
     case "mobile":
       return (
-        <DetailScreen title={title} listPath={list.path} actions={actions} footer={footerNode}>
+        <DetailScreen title={mobileTitle ?? title} listPath={list.path} footer={footerNode}>
           {body}
         </DetailScreen>
       );

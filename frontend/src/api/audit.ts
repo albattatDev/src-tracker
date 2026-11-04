@@ -1,5 +1,8 @@
 import { apiFetch } from "./client";
 
+// field -> { String(id): name } for the foreign-key fields of old_values and new_values.
+export type ValueLabels = Record<string, Record<string, string>>;
+
 // These mirror the backend enums AuditEntity and AuditAction (services/audit.py) exactly.
 export const ENTITY_TYPES = [
   "service_request",
@@ -29,6 +32,9 @@ export interface AuditLogOut {
   entity_id: number;
   old_values: Record<string, unknown> | null;
   new_values: Record<string, unknown> | null;
+  // The entity's name ("Eastline Maintenance"), or null when nothing names it.
+  entity_label: string | null;
+  value_labels: ValueLabels;
 }
 
 export interface AuditLogPage {
@@ -59,4 +65,8 @@ export function listAuditLog(params: AuditListParams): Promise<AuditLogPage> {
 
 export function listAuditUsers(): Promise<AuditUser[]> {
   return apiFetch<AuditUser[]>("/audit-log/users");
+}
+
+export function getAuditEntry(id: number): Promise<AuditLogOut> {
+  return apiFetch<AuditLogOut>(`/audit-log/${id}`);
 }

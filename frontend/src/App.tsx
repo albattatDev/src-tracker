@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
+import AuditDetailRoute from "./components/audit/AuditDetailRoute";
 import ContractorDetailRoute from "./components/contractors/ContractorDetailRoute";
 import InvoiceDetailRoute from "./components/invoices/InvoiceDetailRoute";
 import NewRequestRoute from "./components/serviceRequests/NewRequestRoute";
@@ -15,7 +16,7 @@ import LoginPage from "./pages/LoginPage";
 import ServiceRequestsPage from "./pages/ServiceRequestsPage";
 import UsersPage from "./pages/UsersPage";
 import { NAV_ITEMS } from "./navigation";
-import { CONTRACTORS_BASE, INVOICES_BASE, SR_BASE } from "./routes";
+import { AUDIT_BASE, CONTRACTORS_BASE, INVOICES_BASE, SR_BASE } from "./routes";
 import { CREATE_REQUEST_ROLES } from "./utils/permissions";
 
 // Pages that are built. Any nav item not listed here still shows "Coming soon".
@@ -24,7 +25,7 @@ const PAGES: Record<string, ReactElement> = {
   [SR_BASE]: <ServiceRequestsPage />,
   [INVOICES_BASE]: <InvoicesPage />,
   [CONTRACTORS_BASE]: <ContractorsPage />,
-  "/audit-log": <AuditLogPage />,
+  [AUDIT_BASE]: <AuditLogPage />,
   "/users": <UsersPage />,
 };
 
@@ -42,6 +43,7 @@ const PAGE_CHILDREN: Record<string, ReactElement> = {
   ),
   [INVOICES_BASE]: <Route path=":id" element={<InvoiceDetailRoute />} />,
   [CONTRACTORS_BASE]: <Route path=":id" element={<ContractorDetailRoute />} />,
+  [AUDIT_BASE]: <Route path=":id" element={<AuditDetailRoute />} />,
 };
 
 export default function App() {

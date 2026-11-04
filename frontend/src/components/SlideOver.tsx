@@ -9,7 +9,6 @@ export default function SlideOver({
   "aria-label": ariaLabel,
   width,
   breadcrumb,
-  actions,
   onClose,
   footer,
   children,
@@ -17,7 +16,6 @@ export default function SlideOver({
   "aria-label": string;
   width: number;
   breadcrumb: ReactNode;
-  actions?: ReactNode; // header buttons next to the close button
   onClose: () => void;
   footer?: ReactNode; // pinned under the scrolling content (e.g. the action buttons)
   children: ReactNode;
@@ -32,7 +30,7 @@ export default function SlideOver({
       style={{ width: `min(${width}px, 92vw)` }}
       className="fixed inset-y-0 left-auto right-0 m-0 h-dvh max-h-none max-w-none flex-col overflow-hidden border-l border-line bg-surface p-0 text-ink backdrop:bg-black/40 open:flex"
     >
-      <PanelHeader breadcrumb={breadcrumb} actions={actions} onClose={onClose} />
+      <PanelHeader breadcrumb={breadcrumb} onClose={onClose} />
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       {footer && <div className="shrink-0">{footer}</div>}
     </dialog>
