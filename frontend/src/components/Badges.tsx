@@ -6,6 +6,15 @@ import type { UserRole } from "../api/users";
 
 const BASE = "inline-block shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium";
 
+// A pill in any of the colour sets below, for text that is not one of the badge components
+// (a legend row, a chip that is also a link).
+export function pillClass(colors: string): string {
+  return `${BASE} ${colors}`;
+}
+
+// A count of 0 is shown grey, whatever the category's own colour is.
+export const NEUTRAL_PILL = "bg-gray-100 text-gray-700";
+
 interface Display {
   label: string;
   className: string;
@@ -23,7 +32,7 @@ export const STATUS_DISPLAY: Record<SRStatus, Display> = {
   assigned: { label: "Assigned", className: "bg-indigo-100 text-indigo-800" },
   in_progress: { label: "In progress", className: "bg-yellow-100 text-yellow-800" },
   resolved: { label: "Resolved", className: "bg-green-100 text-green-800" },
-  closed: { label: "Closed", className: "bg-gray-200 text-gray-700" },
+  closed: { label: "Closed", className: "bg-violet-100 text-violet-800" },
 };
 
 export function PriorityBadge({ priority }: { priority: Priority }) {
@@ -126,7 +135,7 @@ export function DocumentCountChip({
 
 // Active or inactive (a contractor or a user is deactivated instead of deleted). Word and colour
 // both carry it.
-const ACTIVE_DISPLAY: Record<"active" | "inactive", Display> = {
+export const ACTIVE_DISPLAY: Record<"active" | "inactive", Display> = {
   active: { label: "Active", className: "bg-green-100 text-green-800" },
   inactive: { label: "Inactive", className: "bg-gray-200 text-gray-700" },
 };

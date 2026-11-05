@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { ApiError } from "../api/client";
 import { ROLE_DISPLAY } from "./Badges";
-import type { AdminUser, UserRole } from "../api/users";
+import { USER_ROLES, type AdminUser, type UserRole } from "../api/users";
 import { useAuth } from "../hooks/useAuth";
 import { useCreateUser, useUpdateUser, useUsers } from "../hooks/useUsers";
 import ConfirmDialog from "./ConfirmDialog";
@@ -9,7 +9,6 @@ import Modal from "./Modal";
 import Select from "./Select";
 
 const CONTROL = "rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900";
-const ROLES = Object.keys(ROLE_DISPLAY) as UserRole[];
 
 // Create when `user` is missing, edit otherwise. A role is chosen once, at creation: it is
 // shown as plain text afterwards. The password exists only in the create form and is never
@@ -128,7 +127,7 @@ export default function UserFormDialog({
               <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
                 Role (cannot be changed later)
                 <Select value={role} onChange={(e) => setRole(e.target.value as UserRole)} className={CONTROL}>
-                  {ROLES.map((r) => (
+                  {USER_ROLES.map((r) => (
                     <option key={r} value={r}>
                       {ROLE_DISPLAY[r].label}
                     </option>

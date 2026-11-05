@@ -57,3 +57,19 @@ export function formatDateLikeText(text: string): string {
   }
   return text;
 }
+
+const riyadhLongDateFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Riyadh",
+  weekday: "long",
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+
+// Today in Riyadh for a page header: "Wednesday, 4 Nov 2026".
+export function formatRiyadhLongDate(date: Date): string {
+  const parts = Object.fromEntries(
+    riyadhLongDateFormat.formatToParts(date).map((part) => [part.type, part.value])
+  );
+  return `${parts.weekday}, ${parts.day} ${parts.month} ${parts.year}`;
+}

@@ -17,7 +17,8 @@ export function listManagers(): Promise<UserBrief[]> {
   return apiFetch<UserBrief[]>("/users?role=manager");
 }
 
-export type UserRole = "operations" | "engineer" | "manager" | "admin";
+export const USER_ROLES = ["operations", "engineer", "manager", "admin"] as const;
+export type UserRole = (typeof USER_ROLES)[number];
 
 // Mirrors the backend UserAdminOut (admin Users page). There is no password field.
 export interface AdminUser {

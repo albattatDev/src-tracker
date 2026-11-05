@@ -16,7 +16,7 @@ import LoginPage from "./pages/LoginPage";
 import ServiceRequestsPage from "./pages/ServiceRequestsPage";
 import UsersPage from "./pages/UsersPage";
 import { NAV_ITEMS } from "./navigation";
-import { AUDIT_BASE, CONTRACTORS_BASE, INVOICES_BASE, SR_BASE } from "./routes";
+import { AUDIT_BASE, CONTRACTORS_BASE, INVOICES_BASE, SR_BASE, USERS_BASE } from "./routes";
 import { CREATE_REQUEST_ROLES } from "./utils/permissions";
 
 // Pages that are built. Any nav item not listed here still shows "Coming soon".
@@ -26,7 +26,7 @@ const PAGES: Record<string, ReactElement> = {
   [INVOICES_BASE]: <InvoicesPage />,
   [CONTRACTORS_BASE]: <ContractorsPage />,
   [AUDIT_BASE]: <AuditLogPage />,
-  "/users": <UsersPage />,
+  [USERS_BASE]: <UsersPage />,
 };
 
 // Pages that open something over or beside the list. The list stays mounted and renders the

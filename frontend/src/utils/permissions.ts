@@ -33,3 +33,12 @@ export const VIEW_AUDIT_ROLES: Role[] = ["manager", "admin"];
 // Contractors: admins can look but not change.
 export const VIEW_CONTRACTORS_ROLES: Role[] = ["manager", "admin"];
 export const canWriteContractors = (role: MaybeRole) => role === "manager";
+
+// Dashboard: every role has its own layout, and at most one extra action in the header. A
+// manager can also create requests, but their dashboard has no New request button.
+export type DashboardAction = "new-request" | "add-user";
+export function dashboardActionFor(role: MaybeRole): DashboardAction | null {
+  if (role === "operations" && canCreateRequest(role)) return "new-request";
+  if (role === "admin" && canViewUsers(role)) return "add-user";
+  return null;
+}
