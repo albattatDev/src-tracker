@@ -4,3 +4,4 @@ export const SR_BASE = "/service-requests";
 export const INVOICES_BASE = "/invoices";
 export const CONTRACTORS_BASE = "/contractors";
 export const AUDIT_BASE = "/audit-log";
+export const USERS_BASE = "/users";

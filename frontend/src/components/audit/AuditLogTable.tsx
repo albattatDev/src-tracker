@@ -22,18 +22,22 @@ export default function AuditLogTable({
   wide,
   selectedId,
   dimmed,
+  framed = true,
 }: {
   items: AuditLogOut[];
   role: Role | undefined;
   wide: boolean;
   selectedId: number | undefined;
   dimmed: boolean; // true while the next page loads, so the old rows look "stale"
+  framed?: boolean; // false inside something that already draws the border (the dashboard panel)
 }) {
   const { detailPath } = useListLinks(AUDIT_BASE);
 
   return (
     <div
-      className={`overflow-x-auto rounded-xl border border-line bg-surface ${dimmed ? "opacity-60" : ""}`}
+      className={`overflow-x-auto bg-surface ${framed ? "rounded-xl border border-line" : ""} ${
+        dimmed ? "opacity-60" : ""
+      }`}
     >
       <table className="w-full text-left text-sm">
         <thead className="bg-canvas">
